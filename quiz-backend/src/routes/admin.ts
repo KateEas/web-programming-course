@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
-import { requireAdmin } from '../middleware/admin'; 
-import { scoringService } from '../services/scoringService';
+import { requireAdmin } from '../middleware/admin.js'; 
+import { scoringService } from '../services/scoringService.js';
 
 const prisma = new PrismaClient();
 const app = new Hono();

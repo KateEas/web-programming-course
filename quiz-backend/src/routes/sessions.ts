@@ -2,8 +2,8 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { verify } from 'hono/jwt';
-import { sessionService } from '../services/sessionService';
-import { handleError, throwError, throwUnauthorized, throwNotFound, throwForbidden } from '../utils/errors';
+import { sessionService } from '../services/sessionService.js';
+import { handleError, throwError, throwUnauthorized, throwNotFound, throwForbidden } from '../utils/errors.js';
 
 const prisma = new PrismaClient();
 const app = new Hono();

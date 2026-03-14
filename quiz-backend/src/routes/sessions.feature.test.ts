@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { app } from '../app'
+import { app } from '../app.js'
 
 describe('Sessions Feature', () => {
     let studentToken: string

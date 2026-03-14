@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { scoringService } from '../scoringService';
+import { scoringService } from '../scoringService.js';
 
 describe('ScoringService', () => {
     // ===== ТЕСТЫ ДЛЯ МНОЖЕСТВЕННОГО ВЫБОРА =====

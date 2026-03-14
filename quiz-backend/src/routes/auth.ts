@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { sign, verify } from 'hono/jwt'
-import { AuthCodeSchema } from '../utils/validation'
-import type { GitHubUser, GitHubEmail, JWTPayload } from '../utils/validation'
+import { AuthCodeSchema } from '../utils/validation.js'
+import type { GitHubUser, GitHubEmail, JWTPayload } from '../utils/validation.js'
 import { PrismaClient } from '@prisma/client'
 
 const auth = new Hono()

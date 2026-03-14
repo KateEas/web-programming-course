@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { app } from '../app'
+import { app } from '../app.js'
 
 describe('Auth Feature', () => {
     beforeAll(() => {

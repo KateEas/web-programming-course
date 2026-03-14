@@ -4,8 +4,8 @@ import {
     mockQuestionsWithAnswers,
     mockSessions,
     mockAnswers
-} from '../data/mockData'
-import { scoringService } from './scoringService'
+} from '../data/mockData.js'
+import { scoringService } from './scoringService.js'
 
 // Интерфейсы для типизации
 interface EssayRubric {

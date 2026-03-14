@@ -1,7 +1,7 @@
 import { Context, Next } from 'hono';
 import { verify } from 'hono/jwt';
 import { PrismaClient } from '@prisma/client';
-import { handleError, throwError } from '../utils/errors';
+import { handleError, throwError } from '../utils/errors.js';
 
 
 const prisma = new PrismaClient();

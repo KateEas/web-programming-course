@@ -1,12 +1,12 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import { auth } from './routes/auth'
 import 'dotenv/config'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import sessionsRoutes from './routes/sessions'
-import questionsRoutes from './routes/questions'
-import adminRoutes from './routes/admin'
+import {auth} from './routes/auth.js'
+import sessionsRoutes from './routes/sessions.js'
+import questionsRoutes from './routes/questions.js'
+import adminRoutes from './routes/admin.js'
 
 const app = new Hono()
 // Middleware

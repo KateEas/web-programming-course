@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { scoringService } from './scoringService';
+import { scoringService } from './scoringService.js';
 
 export class SessionService {
     private prisma: PrismaClient;

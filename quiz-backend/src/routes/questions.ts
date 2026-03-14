@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client';
-import { mockDataService } from '../services/mockDataService'
-import { config } from '../config'
+import { mockDataService } from '../services/mockDataService.js'
+import { config } from '../config/config.js'
 import { verify } from 'hono/jwt';
-import { handleError, throwError } from '../utils/errors';
+import { handleError, throwError } from '../utils/errors.js';
 
 const prisma = new PrismaClient();
 const app = new Hono();

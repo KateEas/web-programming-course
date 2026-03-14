@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { AnswerSchema, CreateSessionSchema, QuestionSchema } from './validation'
+import { AnswerSchema, CreateSessionSchema, QuestionSchema } from './validation.js'
 
 describe('Validation Schemas', () => {
     describe('CreateSessionSchema', () => {

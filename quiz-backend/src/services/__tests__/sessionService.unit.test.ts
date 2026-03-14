@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { PrismockClient } from 'prismock'
-import { SessionService } from '../sessionService'
+import { SessionService } from '../sessionService.js'
 
 describe('SessionService with Prismock', () => {
     let sessionService: SessionService

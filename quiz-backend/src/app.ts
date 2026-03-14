@@ -1,10 +1,10 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import { auth } from './routes/auth'
-import sessionsRoutes from './routes/sessions'
-import questionsRoutes from './routes/questions'
-import adminRoutes from './routes/admin'
+import { auth } from './routes/auth.js'
+import sessionsRoutes from './routes/sessions.js'
+import questionsRoutes from './routes/questions.js'
+import adminRoutes from './routes/admin.js'
 
 export const app = new Hono()
 
