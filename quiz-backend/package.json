@@ -10,7 +10,8 @@
     "test:feature": "vitest run --dir src --testNamePattern feature",
     "test": "vitest run --dir src",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.9",
@@ -22,11 +23,17 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^20.19.37",
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
     "@vitest/coverage-v8": "^4.0.18",
+    "eslint": "^8.57.0",
+    "globals": "^17.4.0",
     "prismock": "^1.35.4",
     "tsx": "^4.21.0",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.57.0",
     "vitest": "^4.0.18",
     "vitest-mock-extended": "^3.1.0"
   }
