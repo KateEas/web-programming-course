@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Управление состоянием: MobX и Zustand</title>
+  <link rel="stylesheet" href="reset.css">
+  <link rel="stylesheet" href="reveal.css">
+  <link rel="stylesheet" href="black.css">
+  <link rel="stylesheet" href="monokai.css">
+  <style>
+    .reveal h1, .reveal h2, .reveal h3 {
+      text-transform: none;
+    }
+
+    .reveal section img {
+      border: none;
+      box-shadow: none;
+      background: none;
+    }
+
+    .reveal pre {
+      width: 100%;
+      font-size: 0.45em;
+      line-height: 1.3;
+    }
+
+    .reveal code {
+      font-family: 'Courier New', monospace;
+      background: rgba(255,255,255,0.1);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .two-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      align-items: start;
+    }
+
+    .highlight-box {
+      background: rgba(102, 126, 234, 0.2);
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .success-box {
+      background: rgba(76, 175, 80, 0.2);
+      border-left: 4px solid #4caf50;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .success-box .hljs-comment {
+      color: #ddd !important;
+    }
+
+    .error-box {
+      background: rgba(244, 67, 54, 0.2);
+      border-left: 4px solid #f44336;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .comparison-table {
+      font-size: 0.7em;
+      width: 100%;
+    }
+
+    .comparison-table th {
+      background: rgba(102, 126, 234, 0.3);
+    }
+
+    .comparison-table td {
+      padding: 10px;
+    }
+
+    .emoji-large {
+      font-size: 3em;
+      display: block;
+      margin: 20px 0;
+    }
+
+    .fragment.highlight-current-green.visible.current-fragment {
+      color: #4caf50;
+    }
+
+    .reveal ul {
+      list-style: none !important;
+    }
+
+    .reveal ul li::before {
+      content: "→";
+      color: #667eea;
+      font-weight: bold;
+      margin-left: -40px;
+      padding-right: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- Титульный слайд -->
+      <section data-background-gradient="linear-gradient(to bottom, #283048, #859398)">
+        <h1>Управление состоянием</h1>
+        <h2>MobX и Zustand</h2>
+        <!-- <p style="margin-top: 60px; font-size: 0.8em; opacity: 0.8;">
+          Современные решения для React-приложений
+        </p> -->
+        <!-- <p style="margin-top: 40px; font-size: 0.6em; opacity: 0.6;">
+          Нажмите пробел для следующего слайда
+        </p> -->
+      </section>
+
+      <!-- План лекции -->
+      <!-- <section>
+        <h2>План лекции</h2>
+        <ol style="font-size: 0.8em;">
+          <li class="fragment">Проблемы управления состоянием</li>
+          <li class="fragment">MobX: реактивное программирование</li>
+          <li class="fragment">Zustand: минималистичное решение</li>
+          <li class="fragment">Сравнение и выбор подхода</li>
+          <li class="fragment">Практические примеры</li>
+        </ol>
+      </section> -->
+
+      <!-- Раздел 1: Проблемы -->
+      <section>
+        <section data-background-gradient="linear-gradient(to right, #f44336, #e91e63)">
+          <h2>Что за проблема то такая?</h2>
+          <h3>Зачем тут чем то управлять</h3>
+          <p class="emoji-large">🤔</p>
+        </section>
+
+        <section>
+          <h3>Проблема #1: Prop Drilling</h3>
+          <pre style="font-size: 0.35em; line-height: 1.2;"><code class="language-tsx" data-trim data-line-numbers>
+function App() {
+  const [user, setUser] = useState(null);
+  return &lt;Layout user={user} setUser={setUser} /&gt;;
+}
+
+function Layout({ user, setUser }) {
+  return &lt;Sidebar user={user} setUser={setUser} /&gt;; // Только передаём!
+}
+
+function Sidebar({ user, setUser }) {
+  return &lt;UserMenu user={user} setUser={setUser} /&gt;; // Только передаём!
+}
+
+function UserMenu({ user, setUser }) {
+  return &lt;UserProfile user={user} setUser={setUser} /&gt;; // Только передаём!
+}
+
+function UserProfile({ user, setUser }) {
+  return &lt;div&gt;{user?.name}&lt;/div&gt;; // Наконец-то используем!
+}
+          </code></pre>
+          <p class="fragment" style="color: #f44336; font-weight: bold;">
+            5 уровней вложенности, чтобы передать данные! 😢
+          </p>
+        </section>
+
+        <section>
+          <h3>Проблема #2: Context API</h3>
+          <div class="two-columns">
+            <div>
+              <h4 style="color: #4caf50;">✅ Решает prop drilling</h4>
+              <pre><code class="language-tsx" data-trim>
+const UserContext = createContext();
+
+function App() {
+  const [user, setUser] = useState(null);
+
+  return (
+    &lt;UserContext.Provider value={{user, setUser}}&gt;
+      &lt;Layout /&gt;
+    &lt;/UserContext.Provider&gt;
+  );
+}
+
+function UserProfile() {
+  const { user } = useContext(UserContext);
+  return &lt;div&gt;{user?.name}&lt;/div&gt;;
+}
+              </code></pre>
+            </div>
+            <div class="fragment">
+              <h4 style="color: #f44336;">❌ Но создаёт новые</h4>
+              <ul style="font-size: 0.8em;">
+                <li>Все потребители ре-рендерятся при любом изменении</li>
+                <li>Нет селекторов — только весь контекст</li>
+                <li>Множество провайдеров = "матрёшка"</li>
+              </ul>
+              <pre><code class="language-tsx" data-trim>
+&lt;UserContext.Provider&gt;
+  &lt;CartContext.Provider&gt;
+    &lt;ThemeContext.Provider&gt;
+      &lt;App /&gt;
+    &lt;/ThemeContext.Provider&gt;
+  &lt;/CartContext.Provider&gt;
+&lt;/UserContext.Provider&gt;
+              </code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3>Проблема #3: Дублирование состояния</h3>
+          <pre><code class="language-tsx" data-trim data-line-numbers>
+// Header.tsx
+function Header() {
+  const [cartCount, setCartCount] = useState(0);
+  return &lt;div&gt;Корзина: {cartCount}&lt;/div&gt;;
+}
+
+// CartPage.tsx
+function CartPage() {
+  const [items, setItems] = useState([]);
+  return &lt;div&gt;{items.length} товаров&lt;/div&gt;;
+}
+
+// Footer.tsx
+function Footer() {
+  const [total, setTotal] = useState(0);
+  return &lt;div&gt;Итого: {total} ₽&lt;/div&gt;;
+}
+          </code></pre>
+          <div class="error-box fragment">
+            <strong>Вопрос:</strong> Как синхронизировать эти три независимых состояния?
+          </div>
+        </section>
+
+        <section>
+          <h3>Нужно централизованное решение!</h3>
+          <div class="highlight-box">
+            <p><strong>useState</strong> — для простых случаев</p>
+            <p><strong>Context API</strong> — для передачи данных вглубь</p>
+            <p><strong>State Management</strong> — для сложных приложений</p>
+          </div>
+          <p class="fragment" style="color: #667eea; font-weight: bold; font-size: 1.2em; margin-top: 40px;">
+            Стейтменеджеры: MobX и Zustand!
+          </p>
+        </section>
+      </section>
+
+      <!-- Раздел 2: MobX -->
+      <section>
+        <section data-background-gradient="linear-gradient(to right, #360033, #0b8793)">
+          <h2>MobX</h2>
+          <p style="font-size: 1.5em;">Реактивное программирование</p>
+          <p class="emoji-large">⚡</p>
+        </section>
+
+        <section>
+          <h3>Философия MobX</h3>
+          <div style="font-size: 1.2em; margin: 40px 0;">
+            <span class="fragment">State</span>
+            <span class="fragment"> → Derivations</span>
+            <span class="fragment"> → Reactions</span>
+          </div>
+          <div style="font-size: 0.9em; margin: 40px 0;">
+            <span class="fragment">Данные</span>
+            <span class="fragment"> → Вычисления</span>
+            <span class="fragment"> → Побочные эффекты (UI)</span>
+          </div>
+          <div class="success-box fragment" style="margin-top: 60px;">
+            <strong>Аналогия с Excel:</strong><br>
+            A1 = 10, A2 = 20, A3 = A1 + A2<br>
+            Изменили A1 → A3 автоматически пересчитался!
+          </div>
+        </section>
+
+        <section>
+          <h3>Observable State</h3>
+          <pre style="font-size: 0.4em;"><code class="language-typescript" data-trim data-line-numbers>
+import { makeAutoObservable } from 'mobx';
+
+class CounterStore {
+  count = 0;
+
+  constructor() {
+    makeAutoObservable(this); // ✨ Магия!
+  }
+
+  increment() { this.count++; }
+  decrement() { this.count--; }
+}
+
+const counterStore = new CounterStore();
+          </code></pre>
+          <div class="highlight-box fragment">
+            <strong>makeAutoObservable</strong> автоматически делает:
+            <ul>
+              <li>Все поля → observable</li>
+              <li>Все методы → actions</li>
+            </ul>
+          </div>
+        </section>
+
+        <section>
+          <h3>Интеграция с React</h3>
+          <pre style="font-size: 0.38em; line-height: 1.2;"><code class="language-tsx" data-trim data-line-numbers>
+import { observer } from 'mobx-react-lite';
+import { counterStore } from './stores/CounterStore'; // ← импорт
+
+const Counter = observer(() => {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Счёт: {counterStore.count}&lt;/h1&gt;
+      &lt;button onClick={() =&gt; counterStore.increment()}&gt;
+        +1
+      &lt;/button&gt;
+      &lt;button onClick={() =&gt; counterStore.decrement()}&gt;
+        -1
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+});
+          </code></pre>
+          <div class="success-box fragment">
+            <strong>observer()</strong> делает компонент реактивным:<br>
+            ✅ Автоматические обновления<br>
+            ✅ Никаких setState/dispatch<br>
+            ✅ Просто читаем и меняем
+          </div>
+        </section>
+
+        <section>
+          <h3>Computed Values — главная фишка!</h3>
+          <pre style="font-size: 0.3em; line-height: 1.05;"><code class="language-typescript" data-trim data-line-numbers>
+class TodoStore {
+  todos = [
+    { id: 1, text: 'Купить молоко', done: false },
+    { id: 2, text: 'Сделать ДЗ', done: true },
+  ];
+
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  // Computed value — автоматический пересчёт!
+  get completedCount() {
+    console.log('Пересчёт!');
+    return this.todos.filter(t => t.done).length;
+  }
+
+  get activeCount() {
+    return this.todos.filter(t => !t.done).length;
+  }
+
+  get progress() {
+    if (this.todos.length === 0) return 0;
+    return (this.completedCount / this.todos.length) * 100;
+  }
+
+  toggleTodo(id) {
+    const todo = this.todos.find(t => t.id === id);
+    if (todo) todo.done = !todo.done;
+  }
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Computed Values: преимущества</h3>
+          <div class="two-columns">
+            <div>
+              <h4 style="color: #4caf50;">Автоматическое обновление</h4>
+              <pre><code class="language-javascript" data-trim>
+// Изменили todos
+todoStore.toggleTodo(1);
+
+// completedCount автоматически
+// пересчитался!
+console.log(todoStore.completedCount);
+              </code></pre>
+            </div>
+            <div class="fragment">
+              <h4 style="color: #4caf50;">Кэширование</h4>
+              <pre><code class="language-javascript" data-trim>
+// Первый раз
+console.log(store.completedCount);
+// → "Пересчёт!" + 1
+
+// Второй раз (todos не менялся)
+console.log(store.completedCount);
+// → 1 (из кэша, без пересчёта!)
+              </code></pre>
+            </div>
+          </div>
+          <div class="highlight-box fragment" style="margin-top: 30px;">
+            <strong>Цепочки:</strong> progress зависит от completedCount,<br>
+            который зависит от todos. Всё работает автоматически!
+          </div>
+        </section>
+
+        <section>
+          <h3>Async Actions</h3>
+          <div class="two-columns">
+            <div>
+              <h4 style="color: #f44336;">❌ Неправильно</h4>
+              <pre><code class="language-typescript" data-trim>
+async fetchUsers() {
+  const response = await fetch('/api');
+  const data = await response.json();
+
+  this.users = data;
+  // ❌ Уже не в action!
+}
+              </code></pre>
+            </div>
+            <div class="fragment">
+              <h4 style="color: #4caf50;">✅ Правильно</h4>
+              <pre><code class="language-typescript" data-trim>
+async fetchUsers() {
+  const response = await fetch('/api');
+  const data = await response.json();
+
+  runInAction(() => {
+    this.users = data;
+    // ✅ В action!
+  });
+}
+              </code></pre>
+            </div>
+          </div>
+          <div class="highlight-box fragment" style="margin-top: 30px;">
+            <strong>Правило:</strong> После await код выполняется вне action.<br>
+            Оборачивайте обновления в <code>runInAction()</code>
+          </div>
+        </section>
+
+        <section>
+          <h3>MobX: React Context</h3>
+          <pre style="font-size: 0.45em; line-height: 1.1;"><code class="language-typescript" data-trim data-line-numbers>
+const TodoStoreContext = createContext(null);
+
+export const TodoStoreProvider = ({ children }) => {
+  const store = useMemo(() => new TodoStore(), []);
+  return (
+    &lt;TodoStoreContext.Provider value={store}&gt;
+      {children}
+    &lt;/TodoStoreContext.Provider&gt;
+  );
+};
+
+export const useTodoStore = () => {
+  const store = useContext(TodoStoreContext);
+  if (!store) {
+    throw new Error('useTodoStore must be used within Provider');
+  }
+  return store;
+};
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>MobX: Резюме</h3>
+          <div style="text-align: left; font-size: 0.9em;">
+            <div class="success-box">
+              <strong>✅ Преимущества:</strong>
+              <ul>
+                <li>Автоматические обновления</li>
+                <li>Computed values из коробки</li>
+                <li>Можно мутировать состояние (в actions)</li>
+                <li>Отличная производительность</li>
+              </ul>
+            </div>
+            <div class="error-box fragment">
+              <strong>⚠️ Нюансы:</strong>
+              <ul>
+                <li>Размер: ~16 KB</li>
+                <li>Нужно помнить про observer</li>
+                <li>runInAction для async</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- Раздел 3: Zustand -->
+      <section>
+        <section data-background-gradient="linear-gradient(to right, #11998e, #38ef7d)">
+          <h2>Zustand</h2>
+          <p style="font-size: 1.5em;">Минималистичное решение</p>
+          <p class="emoji-large">🪶</p>
+        </section>
+
+        <section>
+          <h3>Философия Zustand</h3>
+          <div class="highlight-box">
+            <ul style="font-size: 0.9em;">
+              <li><strong>Минимализм:</strong> всего ~1 KB!</li>
+              <li><strong>Функциональный стиль:</strong> хуки, не классы</li>
+              <li><strong>Без провайдеров:</strong> состояние вне React</li>
+              <li><strong>TypeScript-first:</strong> отличная типизация</li>
+            </ul>
+          </div>
+          <div class="fragment" style="margin-top: 40px; font-size: 0.9em;">
+            <p><strong>Аналогия:</strong></p>
+            <p>MobX — автомобиль</p>
+            <p>Zustand — велик (проще, легче)</p>
+          </div>
+        </section>
+
+        <section>
+          <h3>Создание Store</h3>
+          <pre><code class="language-typescript" data-trim data-line-numbers>
+import { create } from 'zustand';
+
+interface BearStore {
+  bears: number;
+  increase: () => void;
+  decrease: () => void;
+}
+
+const useBearStore = create&lt;BearStore&gt;((set) => ({
+  bears: 0,
+  increase: () => set((state) => ({ bears: state.bears + 1 })),
+  decrease: () => set((state) => ({ bears: state.bears - 1 })),
+}));
+          </code></pre>
+          <div class="highlight-box fragment">
+            <ul>
+              <li><code>create</code> возвращает хук</li>
+              <li><code>set</code> — функция для обновления</li>
+              <li>Никаких классов!</li>
+            </ul>
+          </div>
+        </section>
+
+        <section>
+          <h3>Использование в компонентах</h3>
+          <pre><code class="language-tsx" data-trim data-line-numbers>
+function BearCounter() {
+  const bears = useBearStore((state) => state.bears);
+  const increase = useBearStore((state) => state.increase);
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;{bears} медведей 🐻&lt;/h1&gt;
+      &lt;button onClick={increase}&gt;Добавить&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+          </code></pre>
+          <div class="success-box fragment">
+            <strong>Селекторы:</strong> <code>(state) => state.bears</code><br>
+            Компонент подписывается только на нужную часть!
+          </div>
+        </section>
+
+        <section>
+          <h3>Селекторы — ключ к производительности</h3>
+          <div class="two-columns">
+            <div>
+              <h4 style="color: #f44336;">❌ Плохо</h4>
+              <pre><code class="language-tsx" data-trim>
+function Component() {
+  // Подписка на ВСЁ!
+  const store = useStore();
+
+  return (
+    &lt;div&gt;{store.count}&lt;/div&gt;
+  );
+}
+              </code></pre>
+              <p style="font-size: 0.8em;">Обновится при любом изменении store</p>
+            </div>
+            <div class="fragment">
+              <h4 style="color: #4caf50;">✅ Хорошо</h4>
+              <pre><code class="language-tsx" data-trim>
+function Component() {
+  // Только count
+  const count = useStore(
+    (state) => state.count
+  );
+
+  return (
+    &lt;div&gt;{count}&lt;/div&gt;
+  );
+}
+              </code></pre>
+              <p style="font-size: 0.8em;">Обновится только при изменении count</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3>Async Actions — просто!</h3>
+          <pre><code class="language-typescript" data-trim data-line-numbers>
+const useUserStore = create((set) => ({
+  users: [],
+  loading: false,
+  error: null,
+
+  fetchUsers: async () => {
+    set({ loading: true, error: null });
+
+    const response = await fetch('/api/users');
+    const users = await response.json();
+
+    set({ users, loading: false });
+  },
+}));
+          </code></pre>
+          <div class="success-box fragment">
+            <strong>Просто async/await!</strong><br>
+            ✅ Никаких runInAction<br>
+            ✅ Просто вызываете set когда нужно
+          </div>
+        </section>
+
+        <section>
+          <h3>Middleware: persist</h3>
+          <pre><code class="language-typescript" data-trim data-line-numbers>
+import { persist } from 'zustand/middleware';
+
+const useSettingsStore = create(
+  persist(
+    (set) => ({
+      theme: 'light',
+      setTheme: (theme) => set({ theme }),
+    }),
+    { name: 'app-settings' } // Ключ в localStorage
+  )
+);
+          </code></pre>
+          <div class="success-box fragment">
+            <strong>Автосохранение в localStorage!</strong><br>
+            ✅ При изменении → сохраняется<br>
+            ✅ При загрузке → восстанавливается
+          </div>
+        </section>
+
+        <section>
+          <h3>Middleware: immer</h3>
+          <pre><code class="language-typescript" data-trim data-line-numbers>
+import { immer } from 'zustand/middleware/immer';
+
+const useTodoStore = create(
+  immer((set) => ({
+    todos: [],
+
+    addTodo: (text) => set((state) => {
+      state.todos.push({ text, done: false }); // Прямая мутация!
+    }),
+  }))
+);
+          </code></pre>
+          <div class="highlight-box fragment">
+            Пишите код как будто мутируете,<br>
+            но под капотом — immutable обновления!
+          </div>
+        </section>
+
+        <section>
+          <h3>Middleware: devtools</h3>
+          <pre><code class="language-typescript" data-trim data-line-numbers>
+import { devtools } from 'zustand/middleware';
+
+const useStore = create(
+  devtools(
+    (set) => ({
+      count: 0,
+      increase: () => set((s) => ({ count: s.count + 1 }),
+                          false, 'increase'),
+    }),
+    { name: 'MyStore' }
+  )
+);
+          </code></pre>
+          <div class="success-box fragment">
+            <strong>Redux DevTools!</strong><br>
+            ✅ История изменений<br>
+            ✅ Time-travel debugging
+          </div>
+        </section>
+
+        <section>
+          <h3>Zustand: Резюме</h3>
+          <div style="text-align: left; font-size: 0.9em;">
+            <div class="success-box">
+              <strong>✅ Преимущества:</strong>
+              <ul>
+                <li>Размер: всего 1 KB!</li>
+                <li>Простой API</li>
+                <li>Легко учиться</li>
+                <li>Прикольные middleware</li>
+              </ul>
+            </div>
+            <div class="error-box fragment">
+              <strong>⚠️ Нюансы:</strong>
+              <ul>
+                <li>Computed вручную (селекторы)</li>
+                <li>Нужно помнить про immutability</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- Раздел 4: Сравнение -->
+      <section>
+        <section data-background-gradient="linear-gradient(to right, #fc4a1a, #f7b733)">
+          <h2>Сравнение</h2>
+          <p style="font-size: 1.5em;">MobX vs Zustand</p>
+          <p class="emoji-large">⚖️</p>
+        </section>
+
+        <section>
+          <h3>Сравнительная таблица</h3>
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Критерий</th>
+                <th>MobX</th>
+                <th>Zustand</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="fragment">
+                <td><strong>Размер</strong></td>
+                <td>16 KB</td>
+                <td>1 KB ❤️</td>
+              </tr>
+              <tr class="fragment">
+                <td><strong>Computed</strong></td>
+                <td>Встроенные ❤️</td>
+                <td>Селекторы вручную</td>
+              </tr>
+              <tr class="fragment">
+                <td><strong>Мутации</strong></td>
+                <td>Разрешены ❤️</td>
+                <td>Immutable (или immer)</td>
+              </tr>
+              <tr class="fragment">
+                <td><strong>Обучение</strong></td>
+                <td>Средняя сложность</td>
+                <td>Лёгкая ❤️</td>
+              </tr>
+              <tr class="fragment">
+                <td><strong>TypeScript</strong></td>
+                <td>Хорошо</td>
+                <td>Отлично ❤️</td>
+              </tr>
+              <tr class="fragment">
+                <td><strong>Стиль</strong></td>
+                <td>ООП, классы</td>
+                <td>Функциональный</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h3>Когда использовать MobX?</h3>
+          <div class="success-box" style="text-align: left;">
+            <p><strong>Используйте MobX, если:</strong></p>
+            <ul>
+              <li>Сложная бизнес-логика</li>
+              <li>Много computed values</li>
+              <li>Команда предпочитает ООП</li>
+              <li>Нужны автоматические реакции</li>
+            </ul>
+          </div>
+          <div class="fragment" style="margin-top: 30px;">
+            <pre><code class="language-typescript" data-trim>
+class CRMStore {
+  clients = [];
+  deals = [];
+
+  get activeDeals() {
+    return this.deals.filter(d => d.status === 'active');
+  }
+
+  get revenue() {
+    return this.deals.reduce((sum, d) => sum + d.amount, 0);
+  }
+}
+            </code></pre>
+          </div>
+        </section>
+
+        <section>
+          <h3>Когда использовать Zustand?</h3>
+          <div class="success-box" style="text-align: left;">
+            <p><strong>Используйте Zustand, если:</strong></p>
+            <ul>
+              <li>Простота и минимализм</li>
+              <li>UI-состояние (модалки, формы)</li>
+              <li>Функциональный стиль</li>
+              <li>Важен размер бандла</li>
+            </ul>
+          </div>
+          <div class="fragment" style="margin-top: 30px;">
+            <pre><code class="language-typescript" data-trim>
+const useUIStore = create((set) => ({
+  sidebarOpen: false,
+  currentModal: null,
+  theme: 'light',
+
+  toggleSidebar: () => set(s => ({
+    sidebarOpen: !s.sidebarOpen
+  })),
+  openModal: (modal) => set({ currentModal: modal }),
+  setTheme: (theme) => set({ theme }),
+}));
+            </code></pre>
+          </div>
+        </section>
+
+        <section>
+          <h3>Можно комбинировать!</h3>
+          <div class="highlight-box" style="padding-top: 10px; padding-bottom: 10px;">
+            <p><strong>Лучший подход:</strong></p>
+            <p>🗄️ <strong>MobX</strong> для бизнес-логики и данных</p>
+            <p>💅 <strong>Zustand</strong> для UI-состояния</p>
+          </div>
+          <pre class="fragment" style="font-size: 0.4em"><code class="language-typescript" data-trim>
+// MobX для данных
+class ProductStore {
+  products = [];
+  get categorized() { /* ... */ }
+}
+
+// Zustand для UI
+const useUIStore = create((set) => ({
+  selectedCategory: null,
+  sortBy: 'name',
+}));
+
+// Компонент использует оба!
+const ProductList = observer(() => {
+  const productStore = useProductStore();
+  const { selectedCategory } = useUIStore();
+  // ...
+});
+          </code></pre>
+        </section>
+      </section>
+
+      <!-- Раздел 5: Best Practices -->
+      <section>
+        <section data-background-gradient="linear-gradient(to right, #4caf50, #8bc34a)">
+          <h2>Делай как надо</h2>
+          <h3>как не надо не делай</h3>
+          <p class="emoji-large">💡</p>
+        </section>
+
+        <section>
+          <h3>Общие рекомендации</h3>
+          <div class="two-columns" style="font-size: 0.8em;">
+            <div class="error-box">
+              <h4>❌ Плохо</h4>
+              <pre><code class="language-typescript" data-trim>
+// Форма в глобальном store
+const useAppStore = create(() => ({
+  loginEmail: '',
+  loginPassword: '',
+  setLoginEmail: (e) => set({...}),
+}));
+              </code></pre>
+            </div>
+            <div class="success-box fragment">
+              <h4>✅ Хорошо</h4>
+              <pre><code class="language-tsx" data-trim>
+// Локальное состояние
+function LoginForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] =
+    useState('');
+  // ...
+}
+              </code></pre>
+            </div>
+          </div>
+          <div class="highlight-box fragment" style="margin-top: 30px;">
+            <strong>Правило:</strong> Не всё должно быть в глобальном состоянии!
+          </div>
+        </section>
+
+        <section>
+          <h3>MobX Best Practices</h3>
+          <div style="text-align: left; font-size: 0.75em;">
+            <div class="success-box" style="padding: 12px; margin: 12px 0;">
+              <p style="margin-bottom: 8px;">✅ <strong>Всегда используйте actions</strong></p>
+              <pre><code class="language-typescript">
+// ❌ store.count++
+// ✅ store.increment()
+              </code></pre>
+            </div>
+            <div class="success-box fragment" style="padding: 12px; margin: 12px 0;">
+              <p style="margin-bottom: 8px;">✅ <strong>Computed для производных данных</strong></p>
+              <pre><code class="language-typescript">
+// ❌ const completed = store.todos.filter(t => t.done)
+// ✅ get completedTodos() { return this.todos.filter(...) }
+              </code></pre>
+            </div>
+            <div class="success-box fragment" style="padding: 12px; margin: 12px 0;">
+              <p style="margin-bottom: 8px;">✅ <strong>runInAction для async</strong></p>
+              <pre><code class="language-typescript">
+async fetchData() {
+  const data = await api.getData();
+  runInAction(() => { this.data = data; });
+}
+              </code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3>Zustand Best Practices</h3>
+          <div style="text-align: left; font-size: 0.75em;">
+            <div class="success-box" style="padding: 12px; margin: 12px 0;">
+              <p style="margin-bottom: 8px;">✅ <strong>Используйте селекторы</strong></p>
+              <pre><code class="language-typescript">
+// ❌ const store = useStore()
+// ✅ const count = useStore(state => state.count)
+              </code></pre>
+            </div>
+            <div class="success-box fragment" style="padding: 12px; margin: 12px 0;">
+              <p style="margin-bottom: 8px;">✅ <strong>Immutable updates</strong></p>
+              <pre><code class="language-typescript">
+// ❌ state.items.push(item)
+// ✅ ({ items: [...state.items, item] })
+              </code></pre>
+            </div>
+            <div class="success-box fragment" style="padding: 12px; margin: 12px 0;">
+              <p style="margin-bottom: 8px;">✅ <strong>Выносите селекторы</strong></p>
+              <pre><code class="language-typescript">
+const selectUser = (state) => state.user;
+const user = useAppStore(selectUser);
+              </code></pre>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- Заключение -->
+      <section>
+        <section data-background-gradient="linear-gradient(to bottom, #283048, #859398)">
+          <h2>Резюме</h2>
+          <div style="text-align: left; font-size: 0.9em; margin-top: 40px;">
+            <div class="fragment">
+              <p> <strong>MobX</strong> — реактивность, автоматизация, ООП</p>
+            </div>
+            <div class="fragment">
+              <p> <strong>Zustand</strong> — минимализм, простота, функциональность</p>
+            </div>
+            <div class="fragment">
+              <p> <strong>Выбор</strong> — зависит от задачи и команды</p>
+            </div>
+            <div class="fragment">
+              <p> <strong>Комбинация</strong> — MobX для данных + Zustand для UI</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- <section>
+          <h2>Домашнее задание</h2>
+          <ol style="text-align: left; font-size: 0.9em;">
+            <li class="fragment">
+              Реализуйте Todo-приложение на <strong>MobX</strong>
+              <ul style="font-size: 0.9em;">
+                <li>Computed values для статистики</li>
+                <li>Фильтры (все/активные/выполненные)</li>
+              </ul>
+            </li>
+            <li class="fragment" style="margin-top: 20px;">
+              Реализуйте корзину товаров на <strong>Zustand</strong>
+              <ul style="font-size: 0.9em;">
+                <li>Добавление/удаление товаров</li>
+                <li>Persist в localStorage</li>
+              </ul>
+            </li>
+            <li class="fragment" style="margin-top: 20px;">
+              (Опционально) Комбинируйте оба подхода
+            </li>
+          </ol>
+        </section> -->
+
+        <section>
+          <h2>Ресурсы</h2>
+          <div style="font-size: 0.8em; text-align: left;">
+            <p> <strong>Документация:</strong></p>
+            <ul>
+              <li>MobX: <a href="https://mobx.js.org">mobx.js.org</a></li>
+              <li>Zustand: <a href="https://github.com/pmndrs/zustand">github.com/pmndrs/zustand</a></li>
+            </ul>
+            <p style="margin-top: 30px;">📖 <strong>Материалы курса:</strong></p>
+            <ul>
+              <li>docs/cheatsheet.md — шпаргалка</li>
+              <li>docs/guide.md — полное руководство</li>
+              <li>docs/interactive.html — интерактивные примеры</li>
+            </ul>
+          </div>
+        </section>
+
+        <section data-background-gradient="linear-gradient(to bottom, #283048, #859398)">
+          <h1>Вопросики?</h1>
+
+          <p style="margin-top: 60px; font-size: 1em;">
+            По домам! Шнеля-шнеля!!!
+          </p>
+        </section>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="reveal.js"></script>
+  <script src="notes.js"></script>
+  <script src="markdown.js"></script>
+  <script src="highlight.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      center: true,
+      slideNumber: true,
+      transition: 'slide',
+      plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ],
+
+      // Настройки
+      width: 1280,
+      height: 720,
+      margin: 0.04,
+
+      // Подсветка кода
+      highlight: {
+        highlightOnLoad: true,
+        escapeHTML: false
+      }
+    });
+  </script>
+</body>
+</html>

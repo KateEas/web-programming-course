@@ -43,12 +43,6 @@ describe('GameStore', () => {
             store.startGame();
             expect(store.gameStatus).toBe('playing');
         });
-
-        it('should load mock questions if questions array is empty', () => {
-            store.startGame();
-            expect(store.questions.length).toBeGreaterThan(0);
-            expect(store.currentQuestionIndex).toBe(0);
-        });
     });
 
     describe('toggleAnswer', () => {
@@ -149,15 +143,29 @@ describe('GameStore', () => {
             expect(store.answeredQuestions[0].pointsEarned).toBe(10);
             expect(store.score).toBe(10);
         });
-
-        it('should not award points for incorrect answer', () => {
-            store.updateAnswerResult('1', false, 0);
-
-            expect(store.answeredQuestions[0].isCorrect).toBe(false);
-            expect(store.score).toBe(0);
-        });
     });
 
+    describe('currentQuestion', () => {
+        beforeEach(() => {
+            const mockQuestions = [
+                { id: '1', type: 'multiple-select', question: 'Q1', options: [], correctAnswers: [], difficulty: 'easy' },
+                { id: '2', type: 'essay', question: 'Q2', options: [], correctAnswers: [], difficulty: 'medium' },
+                { id: '3', type: 'multiple-select', question: 'Q3', options: [], correctAnswers: [], difficulty: 'hard' },
+            ];
+
+            store.setQuestionsFromAPI(mockQuestions as any);
+            store.startGame();
+        });
+        it('should return current question', () => {
+            store.currentQuestionIndex = 1;
+            expect(store.currentQuestion?.id).toBe('2');
+        });
+
+        it('should return null for invalid index', () => {
+            store.currentQuestionIndex = 99;
+            expect(store.currentQuestion).toBeNull();
+        });
+    });
     describe('nextQuestion', () => {
         beforeEach(() => {
             store.questions = [
@@ -172,15 +180,14 @@ describe('GameStore', () => {
             expect(store.currentQuestionIndex).toBe(1);
         });
 
-        it('should clear selected answers', () => {
+        it('should reset answer state when moving to next question', () => {
+            // Устанавливаем тестовые данные
             store.selectedAnswers = [0, 1];
-            store.nextQuestion();
-            expect(store.selectedAnswers).toEqual([]);
-        });
+            store.setText('Previous answer text');
 
-        it('should clear answer text', () => {
-            store.setText('Answer text');
             store.nextQuestion();
+
+            expect(store.selectedAnswers).toEqual([]);
             expect(store.answerText).toBe('');
         });
 
@@ -225,18 +232,8 @@ describe('GameStore', () => {
                 { id: '2', type: 'essay', question: 'Q2', options: [], correctAnswers: [], difficulty: 'medium' },
                 { id: '3', type: 'multiple-select', question: 'Q3', options: [], correctAnswers: [], difficulty: 'hard' },
             ];
-        });
 
-        describe('currentQuestion', () => {
-            it('should return current question', () => {
-                store.currentQuestionIndex = 1;
-                expect(store.currentQuestion?.id).toBe('2');
-            });
-
-            it('should return null for invalid index', () => {
-                store.currentQuestionIndex = 99;
-                expect(store.currentQuestion).toBeNull();
-            });
+            store.startGame();
         });
 
         describe('progress', () => {

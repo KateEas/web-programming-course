@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LR9 Interactive Examples - Database & Scoring</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .search-box {
+            margin: 20px 0 0 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        #search {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        #search:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .tag {
+            padding: 6px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .tag:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .tag.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .example-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .example-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .example-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .example-category {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .example-body {
+            padding: 20px;
+        }
+
+        .example-description {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        pre {
+            background: #1e1e1e;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            margin-bottom: 15px;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .hljs {
+            background: #1e1e1e !important;
+            color: #d4d4d4 !important;
+        }
+
+        .interactive-section {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
+        .interactive-section h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            margin: 5px 0;
+            width: 100%;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .result {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .result.error {
+            background: #ffebee;
+            border-left-color: #f44336;
+            color: #c62828;
+        }
+
+        .not-found {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .not-found h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+        }
+
+        .pagination button.active {
+            background: #764ba2;
+        }
+
+        .pagination button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LR9: Database & Scoring - Interactive Examples</h1>
+            <p class="subtitle">Интерактивные примеры кода с Prisma, Scoring, Admin endpoints</p>
+
+            <div class="search-box">
+                <input type="text" id="search" placeholder="Поиск по названию или коду...">
+            </div>
+
+            <div class="filter-tags">
+                <span class="tag active" data-filter="all">Все</span>
+                <span class="tag" data-filter="prisma">Prisma</span>
+                <span class="tag" data-filter="scoring">Scoring</span>
+                <span class="tag" data-filter="admin">Admin</span>
+                <span class="tag" data-filter="validation">Validation</span>
+                <span class="tag" data-filter="optimization">Optimization</span>
+            </div>
+        </header>
+
+        <div id="examples" class="examples-grid"></div>
+
+        <div id="pagination" class="pagination"></div>
+
+        <div id="notFound" class="not-found" style="display: none;">
+            <h3>По вашему запросу ничего не найдено</h3>
+            <p>Попробуйте изменить фильтр или поисковый запрос</p>
+        </div>
+    </div>
+
+    <footer>
+        Generated for LR9 • Backend Database & Scoring Logic
+    </footer>
+
+    <script>
+        const examples = [
+            {
+                id: 1,
+                title: "One-to-Many Relationship",
+                category: "prisma",
+                description: "Связь один User к много Sessions",
+                code: `// Schema
+model User {
+  id       String    @id @default(cuid())
+  sessions Session[]
+}
+
+model Session {
+  id     String @id @default(cuid())
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+}
+
+// Query
+const user = await prisma.user.findUnique({
+  where: { id: "user1" },
+  include: { sessions: true }
+});`
+            },
+            {
+                id: 2,
+                title: "Many-to-Many Relationship",
+                category: "prisma",
+                description: "Question имеет много Tags и наоборот",
+                code: `model Question {
+  id   String @id @default(cuid())
+  tags Tag[]
+}
+
+model Tag {
+  id        String @id @default(cuid())
+  name      String
+  questions Question[]
+}
+
+// Query
+const q = await prisma.question.findUnique({
+  where: { id: "q1" },
+  include: { tags: true }
+});
+
+// Create with relations
+await prisma.question.create({
+  data: {
+    text: "...",
+    tags: {
+      connect: [{ id: "tag1" }, { id: "tag2" }]
+    }
+  }
+});`
+            },
+            {
+                id: 3,
+                title: "Transactions for Atomicity",
+                category: "prisma",
+                description: "Гарантировать что все операции выполняются вместе или ничего",
+                code: `async function submitSession(sessionId: string) {
+  const result = await prisma.$transaction(async (tx) => {
+    // Все операции должны выполниться или откатиться
+    const answers = await tx.answer.findMany({
+      where: { sessionId }
+    });
+
+    const score = answers.reduce(
+      (sum, a) => sum + (a.score || 0), 0
+    );
+
+    const session = await tx.session.update({
+      where: { id: sessionId },
+      data: { score, status: "completed" }
+    });
+
+    return session;
+  });
+  return result;
+}`
+            },
+            {
+                id: 4,
+                title: "Performance: Select Fields",
+                category: "optimization",
+                description: "Загружать только нужные поля вместо всех",
+                code: `// ❌ Неоптимально - загружает всё
+const sessions = await prisma.session.findMany();
+
+// ✅ Оптимально - загружает только нужное
+const sessions = await prisma.session.findMany({
+  select: {
+    id: true,
+    score: true,
+    status: true,
+    user: {
+      select: { name: true, email: true }
+    }
+  }
+});
+
+// Это может ускорить query в 10 раз!`
+            },
+            {
+                id: 5,
+                title: "Avoid N+1 Problem with Include",
+                category: "optimization",
+                description: "Использовать include для загрузки связей одним query",
+                code: `// ❌ N+1 problem - 10,001 query!
+const sessions = await prisma.session.findMany();
+for (const session of sessions) {
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId }
+  });
+}
+
+// ✅ Правильно - 1 query со связью
+const sessions = await prisma.session.findMany({
+  include: {
+    user: true
+  }
+});`
+            },
+            {
+                id: 6,
+                title: "Pagination for Large Datasets",
+                category: "optimization",
+                description: "Не загружайте всё сразу, используйте pagination",
+                code: `const page = 1;
+const limit = 20;
+
+const sessions = await prisma.session.findMany({
+  skip: (page - 1) * limit,
+  take: limit,
+  orderBy: { createdAt: 'desc' },
+  select: { id: true, score: true }
+});
+
+// Получить общее количество
+const total = await prisma.session.count();
+const pages = Math.ceil(total / limit);
+
+return {
+  data: sessions,
+  pagination: { page, limit, total, pages }
+};`
+            },
+            {
+                id: 7,
+                title: "Multiple-Select Scoring",
+                category: "scoring",
+                description: "Подсчитать баллы за multiple-select вопрос",
+                code: `function scoreMultipleSelect(
+  correctAnswers: string[],
+  studentAnswers: string[]
+): number {
+  let score = 0;
+
+  for (const answer of studentAnswers) {
+    if (correctAnswers.includes(answer)) {
+      score += 1; // правильный ответ
+    } else {
+      score -= 0.5; // неправильный ответ
+    }
+  }
+
+  return Math.max(0, score);
+}
+
+// Примеры
+scoreMultipleSelect(["A", "C", "D"], ["A", "C"]); // 2
+scoreMultipleSelect(["A", "C", "D"], ["A", "B", "C"]); // 1.5
+scoreMultipleSelect(["A", "C", "D"], ["B", "E"]); // 0`
+            },
+            {
+                id: 8,
+                title: "Essay Scoring with Rubric",
+                category: "scoring",
+                description: "Оценить essay ответ по рубрике (критериям)",
+                code: `interface Grade {
+  criterion: string;
+  points: number;
+}
+
+interface RubricCriterion {
+  name: string;
+  maxPoints: number;
+}
+
+function scoreEssay(
+  grades: Grade[],
+  rubric: RubricCriterion[]
+): number {
+  let total = 0;
+
+  for (const grade of grades) {
+    const criterion = rubric.find(r => r.name === grade.criterion);
+    if (!criterion) continue;
+
+    const capped = Math.min(grade.points, criterion.maxPoints);
+    total += capped;
+  }
+
+  return total;
+}
+
+// Пример
+const rubric = [
+  { name: "Clarity", maxPoints: 3 },
+  { name: "Examples", maxPoints: 2 }
+];
+const grades = [
+  { criterion: "Clarity", points: 3 },
+  { criterion: "Examples", points: 1 }
+];
+scoreEssay(grades, rubric); // 4 из 5`
+            },
+            {
+                id: 9,
+                title: "Session Start and Submit",
+                category: "admin",
+                description: "Начало и завершение квиз-сессии",
+                code: `// Start session
+async function startSession(
+  userId: string,
+  totalQuestions: number
+) {
+  return await prisma.session.create({
+    data: {
+      userId,
+      status: "in_progress",
+      totalQuestions,
+      expiresAt: new Date(
+        Date.now() + 60 * 60 * 1000 // 1 час
+      )
+    }
+  });
+}
+
+// Submit session
+async function submitSession(sessionId: string) {
+  return await prisma.$transaction(async (tx) => {
+    const session = await tx.session.findUnique({
+      where: { id: sessionId },
+      include: { answers: true }
+    });
+
+    if (session.expiresAt < new Date()) {
+      throw new Error("Session expired");
+    }
+
+    const score = session.answers
+      .filter(a => a.score !== null)
+      .reduce((sum, a) => sum + (a.score || 0), 0);
+
+    return await tx.session.update({
+      where: { id: sessionId },
+      data: { status: "completed", score }
+    });
+  });
+}`
+            },
+            {
+                id: 10,
+                title: "Admin: Grade Essay Answers",
+                category: "admin",
+                description: "API endpoint для преподавателя чтобы оценить essay",
+                code: `app.post('/api/admin/answers/:id/grade', async (c) => {
+  const { id } = c.req.param();
+  const { score, feedback } = await c.req.json();
+
+  const updated = await prisma.$transaction(async (tx) => {
+    // Обновить ответ с оценкой
+    const answer = await tx.answer.update({
+      where: { id },
+      data: { score, feedback }
+    });
+
+    // Проверить что все ответы в сессии проверены
+    const session = await tx.session.findUnique({
+      where: { id: answer.sessionId },
+      include: { answers: true }
+    });
+
+    const allGraded = session.answers.every(
+      a => a.score !== null
+    );
+
+    // Если все - обновить финальный score
+    if (allGraded) {
+      const total = session.answers.reduce(
+        (sum, a) => sum + (a.score || 0),
+        0
+      );
+      await tx.session.update({
+        where: { id: answer.sessionId },
+        data: { score: total, status: "completed" }
+      });
+    }
+
+    return answer;
+  });
+
+  return c.json({ answer: updated });
+});`
+            },
+            {
+                id: 11,
+                title: "Admin: Student Statistics",
+                category: "admin",
+                description: "Получить статистику студента",
+                code: `app.get('/api/admin/students/:userId/stats', async (c) => {
+  const { userId } = c.req.param();
+
+  const sessions = await prisma.session.findMany({
+    where: { userId },
+    select: {
+      id: true,
+      score: true,
+      status: true,
+      startedAt: true,
+      _count: { select: { answers: true } }
+    },
+    orderBy: { startedAt: 'desc' }
+  });
+
+  const avgScore = sessions.length
+    ? sessions.reduce((sum, s) => sum + (s.score || 0), 0) /
+      sessions.length
+    : 0;
+
+  return c.json({
+    userId,
+    totalSessions: sessions.length,
+    averageScore: Math.round(avgScore),
+    sessions
+  });
+});`
+            },
+            {
+                id: 12,
+                title: "Batch Create Questions",
+                category: "optimization",
+                description: "Создать много вопросов одним query",
+                code: `// ❌ Неоптимально - 1000 queries
+for (const questionData of questions) {
+  await prisma.question.create({
+    data: questionData
+  });
+}
+
+// ✅ Оптимально - 1 query
+await prisma.question.createMany({
+  data: [
+    {
+      text: "Question 1",
+      type: "multiple-select",
+      options: ["A", "B", "C", "D"],
+      correctAnswers: ["A", "C"]
+    },
+    {
+      text: "Question 2",
+      type: "essay"
+    }
+    // ... ещё вопросы
+  ],
+  skipDuplicates: true
+});`
+            },
+            {
+                id: 13,
+                title: "Validation with Zod",
+                category: "validation",
+                description: "Валидировать входные данные для ответа",
+                code: `import { z } from 'zod';
+
+const AnswerSchema = z.object({
+  questionId: z.string().uuid(),
+  userAnswer: z.union([
+    z.array(z.string()),  // multiple-select
+    z.string()             // essay
+  ]),
+  sessionId: z.string().uuid()
+});
+
+app.post('/api/sessions/:id/answers', async (c) => {
+  const body = await c.req.json();
+  const parsed = AnswerSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return c.json({
+      error: parsed.error.flatten()
+    }, 400);
+  }
+
+  const validData = parsed.data;
+  // ... дальше обработка с уверенностью что данные правильные
+});`
+            },
+            {
+                id: 14,
+                title: "Database Indexes",
+                category: "optimization",
+                description: "Добавить индексы для быстрого поиска",
+                code: `model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  status    String
+  createdAt DateTime  @default(now())
+
+  // Одиночные индексы
+  @@index([userId])      // для поиска по userId
+  @@index([status])      // для поиска по статусу
+
+  // Комбинированный индекс
+  @@index([userId, status]) // для поиска по обоим
+}
+
+model Answer {
+  id        String @id @default(cuid())
+  sessionId String
+  score     Int?
+
+  // Индекс для быстрого поиска и сортировки
+  @@index([sessionId])
+  @@index([sessionId, score(sort: Desc)])
+}`
+            }
+        ];
+
+        let currentFilter = 'all';
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 6;
+
+        function filterExamples() {
+            let filtered = examples;
+
+            // Filter by category
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(e => e.category === currentFilter);
+            }
+
+            // Filter by search
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(e =>
+                    e.title.toLowerCase().includes(searchTerm) ||
+                    e.description.toLowerCase().includes(searchTerm) ||
+                    e.code.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            return filtered;
+        }
+
+        function renderExamples() {
+            const filtered = filterExamples();
+            const total = filtered.length;
+            const pages = Math.ceil(total / ITEMS_PER_PAGE);
+            const start = (currentPage - 1) * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            const pageItems = filtered.slice(start, end);
+
+            const container = document.getElementById('examples');
+            container.innerHTML = '';
+
+            if (pageItems.length === 0) {
+                document.getElementById('notFound').style.display = 'block';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('notFound').style.display = 'none';
+
+            pageItems.forEach(example => {
+                const card = document.createElement('div');
+                card.className = 'example-card';
+                card.innerHTML = `
+                    <div class="example-header">
+                        <div class="example-title">${example.title}</div>
+                        <span class="example-category">${example.category.toUpperCase()}</span>
+                    </div>
+                    <div class="example-body">
+                        <p class="example-description">${example.description}</p>
+                        <pre><code class="language-typescript">${escapeHtml(example.code)}</code></pre>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            hljs.highlightAll();
+            renderPagination(pages);
+        }
+
+        function renderPagination(pages) {
+            const container = document.getElementById('pagination');
+            if (pages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = '';
+            for (let i = 1; i <= pages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                if (i === currentPage) btn.className = 'active';
+                btn.onclick = () => {
+                    currentPage = i;
+                    renderExamples();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+                container.appendChild(btn);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.getElementById('search').addEventListener('input', () => {
+            currentPage = 1;
+            renderExamples();
+        });
+
+        document.querySelectorAll('.tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                document.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+                tag.classList.add('active');
+                currentFilter = tag.dataset.filter;
+                currentPage = 1;
+                renderExamples();
+            });
+        });
+
+        // Initial render
+        renderExamples();
+    </script>
+</body>
+</html>

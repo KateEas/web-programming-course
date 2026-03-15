@@ -1,1 +1,8 @@
 node_modules
+.claude
+.vscode
+**/node_modules
+lessons/_*
+lessons/**/dist
+.DS_Store
+# lessons
