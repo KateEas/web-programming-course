@@ -11,7 +11,9 @@
     "test": "vitest run --dir src",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "release:local": "powershell -ExecutionPolicy Bypass -File ./scripts/local-release.ps1",
+    "rollback:local": "powershell -ExecutionPolicy Bypass -File ./scripts/rollback-local.ps1"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.9",

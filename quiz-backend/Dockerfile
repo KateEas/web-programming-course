@@ -8,7 +8,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Устанавливаем зависимости
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Копируем исходный код
 COPY . .
