@@ -1,0 +1,19 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quiz-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "file:/app/dev.db"
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+    volumes:
+      - ./data:/app/data
+      - ./prisma:/app/prisma
+    command: >
+      sh -c "npx prisma migrate deploy && 
+             node dist/index.js"
