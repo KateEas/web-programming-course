@@ -1,5 +1,5 @@
 # ---- Builder Stage ----
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS builder  #используем вот такое окружение
 
 WORKDIR /app
 
@@ -20,12 +20,14 @@ RUN npx prisma generate
 RUN npm run build
 
 # ---- Runner Stage ----
-FROM node:20-alpine AS runner
+#создаем заново на основе такого окружения
 
+FROM node:20-alpine AS runner 
 WORKDIR /app
 
 # Копируем собранный код и зависимости из builder
-COPY --from=builder /app/dist ./dist
+# Подгружает файлы с созданного ранее для уменьшения размера архива
+COPY --from=builder /app/dist ./dist  
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma
@@ -37,8 +39,8 @@ RUN addgroup -g 1001 -S nodejs && \
     chown -R nodejs:nodejs /app
 
 USER nodejs
-
-EXPOSE 3000
+# На этом порту будет стараться запуститься
+EXPOSE 3000 
 
 # Команда запуска с ожиданием БД
 CMD ["node", "dist/index.js"]

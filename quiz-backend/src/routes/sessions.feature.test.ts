@@ -25,7 +25,6 @@ describe('Sessions Feature', () => {
         const adminData = await adminRes.json()
         adminToken = adminData.token
 
-        // 3. Создаем сессию - читаем ОДИН раз!
         const sessionRes = await app.request('/api/sessions', {
             method: 'POST',
             headers: {
@@ -35,9 +34,9 @@ describe('Sessions Feature', () => {
             body: JSON.stringify({ durationHours: 2 })
         })
         const sessionData = await sessionRes.json()
-        sessionId = sessionData.session.id // ✅ Правильно - из сохраненных данных
+        sessionId = sessionData.session.id 
 
-        // 4. Получаем вопросы - читаем ОДИН раз!
+
         const questionsRes = await app.request('/api/questions', {
             headers: { Authorization: `Bearer ${studentToken}` }
         })
