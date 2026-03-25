@@ -1,0 +1,719 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LR9: Database & Business Logic - Scoring Algorithm</title>
+    <link rel="stylesheet" href="reset.css" />
+    <link rel="stylesheet" href="reveal.css" />
+    <link rel="stylesheet" href="black.css" />
+    <link rel="stylesheet" href="monokai.css" />
+    <style>
+      .reveal h1,
+      .reveal h2,
+      .reveal h3 {
+        text-transform: none;
+      }
+      .reveal pre {
+        width: 100%;
+        font-size: 0.55em;
+      }
+      .reveal code {
+        padding: 2px 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+      .highlight-box {
+        background: rgba(100, 200, 255, 0.2);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #64c8ff;
+        margin: 20px 0;
+      }
+      .two-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        text-align: left;
+      }
+      .success-box {
+        background: rgba(100, 255, 100, 0.2);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #64ff64;
+        margin: 20px 0;
+      }
+      .reveal ul {
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <!-- Slide 1: Title -->
+        <section>
+          <h1>LR9: Database & Business Logic</h1>
+          <h3>Scoring Algorithm</h3>
+          <p style="font-size: 0.9em; margin-top: 40px">
+            Теория Advanced Backend разработки
+          </p>
+        </section>
+
+        <!-- Slide 2: Agenda -->
+        <section>
+          <h2>План</h2>
+          <ul style="font-size: 0.9em">
+            <li><strong>Часть 0:</strong> Архитектура проекта</li>
+            <li><strong>Часть 1:</strong> Advanced Prisma</li>
+            <li><strong>Часть 2:</strong> Scoring Algorithm</li>
+            <li><strong>Часть 3:</strong> Валидация на сервере</li>
+            <li><strong>Часть 4:</strong> Admin endpoints</li>
+          </ul>
+        </section>
+
+        <!-- Slide 3: Context -->
+        <section>
+          <h2>LR8 контекст</h2>
+          <div class="two-columns" style="font-size: 0.85em">
+            <div>
+              <h4>✅ Реализация</h4>
+              <ul>
+                <li>REST API endpoints</li>
+                <li>Prisma schema</li>
+                <li>JWT токены</li>
+                <li>Basic CRUD</li>
+              </ul>
+            </div>
+            <div>
+              <h4>❌ Далее</h4>
+              <ul>
+                <li>Бизнес-логика</li>
+                <li>Подсчёт баллов</li>
+                <li>Admin контроль</li>
+                <li>Оптимизация</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 4: Project Architecture -->
+        <section>
+          <h2>Project Architecture</h2>
+          <p style="text-align: left; font-size: 0.85em; margin-bottom: 15px">
+            Как организовать код в backend приложении:
+          </p>
+
+          <pre style="font-size: 0.5em; text-align: left"><code>quiz-backend/
+├── src/
+│   ├── index.ts          # Entry point
+│   ├── routes/           # HTTP handlers (req/res)
+│   │   ├── auth.ts
+│   │   ├── sessions.ts
+│   │   └── admin.ts
+│   ├── services/         # Бизнес-логика
+│   │   ├── scoringService.ts
+│   │   └── sessionService.ts
+│   ├── middleware/       # JWT, validation
+│   └── utils/            # Helpers
+├── prisma/
+│   └── schema.prisma     # Database models</code></pre>
+
+          <div class="highlight-box" style="margin-top: 20px; font-size: 0.8em">
+            <strong>Ключевой принцип:</strong> Разделение ответственности
+            <ul style="margin-top: 10px">
+              <li>
+                <strong>routes/</strong> — HTTP слой (status codes, headers)
+              </li>
+              <li>
+                <strong>services/</strong> — бизнес-логика (scoring, validation)
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Slide 5: Service Layer Pattern -->
+        <section>
+          <h2>Service Layer Pattern</h2>
+          <p style="text-align: left; margin-bottom: 15px">
+            Зачем выносить бизнес-логику в отдельные классы?
+          </p>
+
+          <div class="two-columns" style="font-size: 0.75em">
+            <div>
+              <h4 style="color: #ff6b6b">❌ Плохо: логика в route</h4>
+              <pre
+                style="font-size: 0.65em"
+              ><code class="language-typescript">app.post('/score', async (c) => {
+  const { answers, correct } =
+    await c.req.json();
+
+  let score = 0;
+  for (const ans of answers) {
+    if (correct.includes(ans))
+      score += 1;
+    else
+      score -= 0.5;
+  }
+
+  await prisma.session.update({...});
+
+  return c.json({ score });
+});</code></pre>
+            </div>
+
+            <div>
+              <h4 style="color: #64ff64">✅ Хорошо: service делает работу</h4>
+              <pre
+                style="font-size: 0.65em"
+              ><code class="language-typescript">app.post('/score', async (c) => {
+  const { answers, correct } =
+    await c.req.json();
+
+  const score = scoringService
+    .scoreMultipleSelect(
+      correct, answers
+    );
+
+  await sessionService
+    .updateScore(sessionId, score);
+
+  return c.json({ score });
+});</code></pre>
+            </div>
+          </div>
+
+          <div class="success-box" style="margin-top: 15px; font-size: 0.8em">
+            <strong>Преимущества:</strong>
+            <ul>
+              <li>✅ Тестируемость (без HTTP)</li>
+              <li>✅ Переиспользование</li>
+              <li>✅ Читаемость</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Slide 6: Dependency Injection -->
+        <section>
+          <h2>Dependency Injection</h2>
+          <p style="text-align: left; font-size: 0.85em; margin-bottom: 15px">
+            Как организовать зависимости между сервисами?
+          </p>
+
+          <div class="two-columns" style="font-size: 0.65em">
+            <div>
+              <h4 style="margin-bottom: 8px">Маленький проект (LR9)</h4>
+              <pre
+                style="font-size: 0.6em; margin: 0"
+              ><code class="language-typescript">// Singleton
+const prisma =
+  new PrismaClient();
+
+// routes/sessions.ts
+import { prisma }
+  from '../services';
+
+app.post('/sessions',
+  async (c) => {
+  const session =
+    await prisma.session
+      .create({...});
+  return c.json({session});
+});</code></pre>
+              <p style="margin: 5px 0 0 0">✅ Просто</p>
+            </div>
+
+            <div>
+              <h4 style="margin-bottom: 8px">Большой проект</h4>
+              <pre
+                style="font-size: 0.55em; margin: 0"
+              ><code class="language-typescript">class Container {
+  prisma = new PrismaClient();
+  scoringService =
+    new ScoringService();
+  sessionService =
+    new SessionService(
+      this.prisma,
+      this.scoringService
+    );
+}
+
+@Injectable()
+class SessionService {
+  constructor(
+    private prisma,
+    private scoring
+  ) {}
+}</code></pre>
+              <p style="margin: 5px 0 0 0">✅ Гибко</p>
+            </div>
+          </div>
+
+          <div
+            class="highlight-box"
+            style="margin-top: 15px; font-size: 0.8em; padding: 12px 15px"
+          >
+            <strong>Для LR9:</strong> используйте левый подход
+          </div>
+        </section>
+
+        <!-- Slide 7: Best Practices -->
+        <section>
+          <h2 style="margin-bottom: 15px">Best Practices</h2>
+
+          <div class="success-box" style="font-size: 0.72em; padding: 15px">
+            <ol style="text-align: left; margin: 0">
+              <li style="margin-bottom: 8px">
+                ✅ <strong>Один файл инициализации</strong>
+                <pre
+                  style="font-size: 0.6em; margin: 4px 0"
+                ><code>// src/services/index.ts
+export const prisma = new PrismaClient();
+export const scoringService = new ScoringService();
+export const sessionService = new SessionService(
+  prisma, scoringService);</code></pre>
+              </li>
+
+              <li style="margin-bottom: 8px">
+                ✅ <strong>Routes импортируют сервисы</strong>
+                <pre
+                  style="font-size: 0.6em; margin: 4px 0"
+                ><code>import { sessionService } from '../services';
+app.post('/sessions', async (c) => {
+  const result = await sessionService
+    .createSession(...);
+  return c.json(result);
+});</code></pre>
+              </li>
+
+              <li>
+                ✅ <strong>Тестируемость</strong>
+                <pre
+                  style="font-size: 0.6em; margin: 4px 0"
+                ><code>const service = new ScoringService();
+const score = service.scoreMultipleSelect(
+  ['A','C'], ['A','B','C']);
+expect(score).toBe(1.5);</code></pre>
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- Slide 8: Advanced Prisma - Relationships -->
+        <section>
+          <h2>Advanced Prisma: Relationships</h2>
+          <p style="text-align: left; font-size: 0.85em">
+            Три типа связей между таблицами:
+          </p>
+          <ul style="font-size: 0.85em">
+            <li><strong>One-to-Many:</strong> User → много Sessions</li>
+            <li><strong>Many-to-Many:</strong> Question → много Tags</li>
+            <li><strong>One-to-One:</strong> User → Profile</li>
+          </ul>
+          <pre
+            style="margin-top: 20px; font-size: 0.5em"
+          ><code class="language-typescript">model User {
+  id       String
+  sessions Session[]  // один User -> много Sessions
+}
+
+model Session {
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+}</code></pre>
+        </section>
+
+        <!-- Slide 5: Transactions -->
+        <section>
+          <h2>Transactions (Транзакции)</h2>
+          <p style="text-align: left; margin-bottom: 20px">
+            Либо ВСЕ операции выполняются, либо НИЧЕГО:
+          </p>
+          <pre
+            style="font-size: 0.5em"
+          ><code class="language-typescript">const result = await prisma.$transaction(async (tx) => {
+  // Шаг 1: считаем баллы
+  const score = calculateScore(answers);
+  
+  // Шаг 2: обновляем session
+  const session = await tx.session.update({
+    where: { id: sessionId },
+    data: { score }
+  });
+  
+  // Если ошибка - откатываются ОБЕ операции!
+  return session;
+});</code></pre>
+          <p style="font-size: 0.8em; margin-top: 15px">
+            ✅ Используйте для критичных операций (баллы, денюшки)
+          </p>
+        </section>
+
+        <!-- Slide 6: Performance Optimization -->
+        <section>
+          <h2>Performance Optimization</h2>
+          <div class="highlight-box" style="font-size: 0.75em">
+            <strong>❌ Неоптимально:</strong>
+            <p>10,000 sessions × 500 bytes = 5 MB</p>
+          </div>
+          <div class="highlight-box" style="font-size: 0.75em">
+            <strong>✅ Оптимально:</strong>
+            <p>10,000 sessions × 50 bytes = 500 KB</p>
+          </div>
+          <pre
+            style="font-size: 0.5em; margin-top: 15px"
+          ><code class="language-typescript">// Select только нужные поля
+const sessions = await prisma.session.findMany({
+  select: {
+    id: true,
+    score: true
+    // НЕ загружаем answers, updatedAt, etc.
+  }
+});</code></pre>
+        </section>
+
+        <!-- Slide 7: Scoring Algorithm - Multiple Select -->
+        <section>
+          <h2>Scoring: Multiple-Select</h2>
+          <p style="text-align: left; font-size: 0.85em">
+            <strong>Правила:</strong>
+          </p>
+          <ul style="font-size: 0.8em">
+            <li>За каждый правильный ответ: <strong>+1 балл</strong></li>
+            <li>За каждый неправильный ответ: <strong>-0.5 балла</strong></li>
+            <li>Минимум: <strong>0 баллов</strong></li>
+          </ul>
+          <div style="margin-top: 20px; text-align: left; font-size: 0.8em">
+            <p><strong>Пример:</strong></p>
+            <p>Правильные: [A, C, D]</p>
+            <p>Студент выбрал: [A, B, C]</p>
+            <p>Расчёт: +1 (A) -0.5 (B) +1 (C) = <strong>1.5 баллов</strong></p>
+          </div>
+        </section>
+
+        <!-- Slide 8: Scoring - Implementation -->
+        <section>
+          <h2>Scoring: Реализация</h2>
+          <pre
+            style="font-size: 0.5em"
+          ><code class="language-typescript">function scoreMultipleSelect(
+  correctAnswers: string[],
+  studentAnswers: string[]
+): number {
+  let score = 0;
+
+  for (const answer of studentAnswers) {
+    if (correctAnswers.includes(answer)) {
+      score += 1;      // правильный
+    } else {
+      score -= 0.5;    // неправильный
+    }
+  }
+
+  return Math.max(0, score);  // минимум 0
+}
+
+// Тесты
+scoreMultipleSelect(['A','C','D'], ['A','C']);      // 2
+scoreMultipleSelect(['A','C','D'], ['A','B','C']);  // 1.5
+scoreMultipleSelect(['A','C','D'], ['B','E']);      // 0</code></pre>
+        </section>
+
+        <!-- Slide 9: Essay Scoring -->
+        <section>
+          <h2>Scoring: Essay Questions</h2>
+          <p style="text-align: left; margin-bottom: 15px">
+            Essay требует <strong>ручной проверки</strong> преподавателем.
+          </p>
+          <p style="text-align: left; font-size: 0.85em">
+            Используем <strong>Rubric</strong> (критерии оценки):
+          </p>
+          <ul style="font-size: 0.8em">
+            <li>Clarity (понимание): 3 балла</li>
+            <li>Examples (примеры): 2 балла</li>
+            <li>Detail (детали): 2 балла</li>
+            <li>Code (код): 3 балла</li>
+          </ul>
+          <p style="margin-top: 20px; font-size: 0.8em">
+            Преподаватель выставляет баллы по каждому критерию → сумма =
+            финальный балл
+          </p>
+        </section>
+
+        <!-- Slide 10: Session Management -->
+        <section>
+          <h2>Session Management</h2>
+          <p style="text-align: left">Жизненный цикл квиз-сессии:</p>
+          <pre
+            style="font-size: 0.5em; text-align: center"
+          ><code>START → in_progress → SUBMIT → completed
+        ↓
+        TIMEOUT → expired</code></pre>
+          <div style="margin-top: 20px; font-size: 0.8em; text-align: left">
+            <p><strong>Что отслеживаем:</strong></p>
+            <ul>
+              <li>status: "in_progress", "completed", "expired"</li>
+              <li>expiresAt: когда истечёт время (1 час)</li>
+              <li>score: результат (null пока не завершена)</li>
+              <li>answers: все ответы студента</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Slide 11: Validation -->
+        <section>
+          <h2>Валидация на сервере</h2>
+          <p style="text-align: left; margin-bottom: 15px">
+            Всегда валидируйте! Фронтенд может быть скомпрометирован.
+          </p>
+          <pre
+            style="font-size: 0.5em"
+          ><code class="language-typescript">import { z } from 'zod';
+
+const AnswerSchema = z.object({
+  questionId: z.string().uuid(),
+  userAnswer: z.array(z.string()),
+  sessionId: z.string().uuid()
+});
+
+app.post('/api/answers', async (c) => {
+  const parsed = AnswerSchema.safeParse(await c.req.json());
+  if (!parsed.success) {
+    return c.json({ error: parsed.error }, 400);
+  }
+  // Дальше работаем только с valididated data
+});</code></pre>
+        </section>
+
+        <!-- Slide 12: Admin Endpoints -->
+        <section>
+          <h2>Admin Endpoints</h2>
+          <p style="text-align: left; font-size: 0.85em">Admin может:</p>
+          <ul style="font-size: 0.85em">
+            <li>✏️ Создавать, редактировать вопросы</li>
+            <li>📝 Проверять essay ответы</li>
+            <li>📊 Просматривать статистику</li>
+            <li>💾 Экспортировать результаты</li>
+          </ul>
+          <pre
+            style="font-size: 0.5em; margin-top: 15px"
+          ><code class="language-typescript">// Требуем admin роль
+function requireAdmin(c: Context) {
+  const user = c.get('user');
+  if (user.role !== 'admin') {
+    throw new Unauthorized("Admin only");
+  }
+}</code></pre>
+        </section>
+
+        <!-- Slide 13: Admin - Grading -->
+        <section>
+          <h2>Admin: Оценивание Essay</h2>
+          <pre
+            style="font-size: 0.5em"
+          ><code class="language-typescript">app.post('/api/admin/answers/:id/grade', async (c) => {
+  const { score, feedback } = await c.req.json();
+
+  return await prisma.$transaction(async (tx) => {
+    // Обновить ответ с оценкой
+    const answer = await tx.answer.update({
+      where: { id },
+      data: { score, feedback }
+    });
+
+    // Проверить что все ответы в сессии проверены
+    const session = await tx.session.findUnique({
+      where: { id: answer.sessionId },
+      include: { answers: true }
+    });
+
+    // Если все проверены - обновить финальный score
+    if (session.answers.every(a => a.score !== null)) {
+      const total = session.answers.reduce(
+        (s, a) => s + (a.score || 0), 0
+      );
+      await tx.session.update({
+        where: { id },
+        data: { score: total, status: "completed" }
+      });
+    }
+
+    return answer;
+  });
+});</code></pre>
+        </section>
+
+        <!-- Slide 14: Batch Operations -->
+        <section>
+          <h2>Batch Operations</h2>
+          <p style="text-align: left; margin-bottom: 15px">
+            Создавать много записей одним query:
+          </p>
+          <pre
+            style="font-size: 0.5em"
+          ><code class="language-typescript">// ❌ Плохо: 1000 queries
+for (const q of questions) {
+  await prisma.question.create({ data: q });
+}
+
+// ✅ Хорошо: 1 query
+await prisma.question.createMany({
+  data: questions,
+  skipDuplicates: true
+});
+
+// Также для обновления
+await prisma.answer.updateMany({
+  where: { sessionId: "s1" },
+  data: { status: "graded" }
+});</code></pre>
+        </section>
+
+        <!-- Slide 15: Database Optimization -->
+        <section>
+          <h2>Database Optimization</h2>
+          <p style="text-align: left; font-size: 0.9em">Три важных техники:</p>
+          <ol style="font-size: 0.85em">
+            <li>
+              <strong>Индексы:</strong> @@index([userId]) для быстрого поиска
+            </li>
+            <li>
+              <strong>Пагинация:</strong> skip, take вместо загрузки всего
+            </li>
+            <li>
+              <strong>Select/Include:</strong> выбирайте только нужные поля
+            </li>
+          </ol>
+          <pre
+            style="font-size: 0.5em; margin-top: 15px"
+          ><code class="language-prisma">model Session {
+  id        String @id
+  userId    String
+  status    String
+  createdAt DateTime
+
+  @@index([userId])           // индекс на userId
+  @@index([userId, status])   // комбинированный индекс
+}</code></pre>
+        </section>
+
+        <!-- Slide 16: Pagination -->
+        <section>
+          <h2>Pagination</h2>
+          <p style="text-align: left; margin-bottom: 15px">
+            Не загружайте 10,000 записей сразу!
+          </p>
+          <pre
+            style="font-size: 0.5em"
+          ><code class="language-typescript">const page = 1;
+const limit = 20;
+
+const sessions = await prisma.session.findMany({
+  skip: (page - 1) * limit,
+  take: limit,
+  orderBy: { createdAt: 'desc' }
+});
+
+const total = await prisma.session.count();
+const pages = Math.ceil(total / limit);
+
+return { data: sessions, pagination: { page, limit, total, pages } };</code></pre>
+        </section>
+
+        <!-- Slide 17: Best Practices Summary -->
+        <section>
+          <h2>Best Practices</h2>
+          <div class="success-box">
+            <ol style="font-size: 0.85em; text-align: left">
+              <li>✅ Используйте <strong>relationships</strong> для связей</li>
+              <li>
+                ✅ Оптимизируйте queries с <strong>select/include</strong>
+              </li>
+              <li>
+                ✅ Используйте <strong>transactions</strong> для критичных
+                операций
+              </li>
+              <li>✅ Валидируйте ВСЁ с <strong>Zod</strong></li>
+              <li>✅ Защищайте endpoints <strong>middleware</strong></li>
+              <li>
+                ✅ Добавляйте <strong>индексы</strong> для часто используемых
+                полей
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- Slide 18: Практический пример -->
+        <section>
+          <h2>Полный Сценарий</h2>
+          <div style="text-align: left; font-size: 0.8em">
+            <p><strong>Студент Иван:</strong></p>
+            <ol>
+              <li>Нажимает "Start" → создаётся Session</li>
+              <li>Отвечает на multiple-select → score считается сразу</li>
+              <li>Отвечает на essay → score=null (ждёт проверки)</li>
+              <li>Нажимает "Submit" → transaction обновляет Session</li>
+            </ol>
+            <p style="margin-top: 15px"><strong>Преподаватель Анна:</strong></p>
+            <ol>
+              <li>Видит essay ответ в админ панели</li>
+              <li>Читает и выставляет оценку 8 из 10</li>
+              <li>Backend: обновляет ответ и пересчитывает финальный score</li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- Slide 19: Резюме -->
+        <section>
+          <h2>Резюме</h2>
+          <div class="success-box">
+            <ul style="font-size: 0.85em">
+              <li>✅ Advanced Prisma (relationships, transactions)</li>
+              <li>✅ Scoring Algorithm (multiple-select, essay)</li>
+              <li>✅ Session Management (жизненный цикл)</li>
+              <li>✅ Валидация на сервере (Zod)</li>
+              <li>✅ Admin endpoints (управление, оценивание)</li>
+              <li>✅ Database optimization (индексы, пагинация)</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Slide 20: Далее - На следующей неделе -->
+        <section>
+          <h2>На практике</h2>
+          <div class="highlight-box" style="font-size: 0.85em">
+            <ol style="text-align: left">
+              <li>Реализуете scoring functions</li>
+              <li>Обновите Prisma schema с relationships</li>
+              <li>Добавите Session логику в endpoints</li>
+              <li>Реализуете admin endpoints</li>
+              <li>Добавите валидацию с Zod</li>
+            </ol>
+          </div>
+          <p style="margin-top: 30px">
+            Берем backend LR8 и вжух почти production!
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <script src="reveal.js"></script>
+    <script src="markdown.js"></script>
+    <script src="highlight.js"></script>
+    <script src="notes.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        highlight: {
+          beforeHighlight: (hljs) => {
+            hljs.getLanguage("typescript") && hljs.getLanguage("typescript");
+          },
+        },
+        plugins: [RevealHighlight],
+        slideNumber: true,
+        transition: "slide",
+        backgroundTransition: "fade",
+      });
+    </script>
+  </body>
+</html>

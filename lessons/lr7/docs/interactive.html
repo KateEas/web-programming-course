@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testing с Vitest & Playwright - Интерактивные примеры</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .function { color: #61afef; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+
+        .search-highlight {
+            background-color: #ffd700;
+            color: #000;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
+        .section-card {
+            transition: all 0.3s ease;
+        }
+
+        .section-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                🧪 Testing: Vitest & Playwright
+            </h1>
+            <p class="text-xl text-white opacity-90">
+                Интерактивные примеры кода для автоматического тестирования
+            </p>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-8">
+            <div class="flex items-center gap-4">
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="🔍 Поиск по примерам кода (например: 'toBe', 'render', 'mock')..."
+                    class="flex-1 px-4 py-3 rounded-lg border-2 border-white/30 bg-white/20 text-white placeholder-white/60 focus:outline-none focus:border-white/60 focus:bg-white/30"
+                    oninput="searchCode()"
+                />
+                <button
+                    onclick="clearSearch()"
+                    class="px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-lg transition"
+                >
+                    Очистить
+                </button>
+            </div>
+            <p class="text-white/70 text-sm mt-2">
+                Найдено примеров: <span id="searchCount" class="font-bold">0</span>
+            </p>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-8">
+            <div class="flex flex-wrap justify-center gap-3">
+                <a href="#basics" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Основы</a>
+                <a href="#matchers" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Matchers</a>
+                <a href="#mocking" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Mocking</a>
+                <a href="#rtl" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">RTL</a>
+                <a href="#user-events" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">User Events</a>
+                <a href="#playwright" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Playwright</a>
+            </div>
+        </nav>
+
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Basics -->
+            <div class="section-card bg-white rounded-2xl p-6 shadow-2xl" id="basics">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>📝</span> Основы Vitest
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Структура теста (AAA Pattern)</h3>
+                        <div class="code-block searchable">
+<span class="keyword">import</span> { <span class="function">describe</span>, <span class="function">it</span>, <span class="function">expect</span> } <span class="keyword">from</span> <span class="string">'vitest'</span>;
+
+<span class="function">describe</span>(<span class="string">'Calculator'</span>, () => {
+  <span class="function">it</span>(<span class="string">'should add two numbers'</span>, () => {
+    <span class="comment">// Arrange - подготовка</span>
+    <span class="keyword">const</span> a = <span class="number">5</span>;
+    <span class="keyword">const</span> b = <span class="number">3</span>;
+
+    <span class="comment">// Act - действие</span>
+    <span class="keyword">const</span> result = a + b;
+
+    <span class="comment">// Assert - проверка</span>
+    <span class="function">expect</span>(result).<span class="function">toBe</span>(<span class="number">8</span>);
+  });
+});</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Хуки (Setup & Teardown)</h3>
+                        <div class="code-block searchable">
+<span class="keyword">import</span> { <span class="function">beforeEach</span>, <span class="function">afterEach</span>, <span class="function">beforeAll</span>, <span class="function">afterAll</span> } <span class="keyword">from</span> <span class="string">'vitest'</span>;
+
+<span class="function">describe</span>(<span class="string">'Database Tests'</span>, () => {
+  <span class="function">beforeAll</span>(() => {
+    <span class="comment">// Запускается 1 раз перед всеми тестами</span>
+    database.<span class="function">connect</span>();
+  });
+
+  <span class="function">beforeEach</span>(() => {
+    <span class="comment">// Запускается перед КАЖДЫМ тестом</span>
+    database.<span class="function">clear</span>();
+  });
+
+  <span class="function">afterEach</span>(() => {
+    <span class="comment">// Запускается после КАЖДОГО теста</span>
+    database.<span class="function">cleanup</span>();
+  });
+
+  <span class="function">afterAll</span>(() => {
+    <span class="comment">// Запускается 1 раз после всех тестов</span>
+    database.<span class="function">disconnect</span>();
+  });
+});</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Vitest vs Jest</h3>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                            <p class="text-sm text-gray-700">
+                                <strong>95% совместимы!</strong> Просто замените <code class="bg-gray-200 px-2 py-1 rounded">vi</code> на <code class="bg-gray-200 px-2 py-1 rounded">jest</code>
+                            </p>
+                        </div>
+                        <div class="code-block searchable mt-2">
+<span class="comment">// Vitest</span>
+<span class="keyword">import</span> { vi } <span class="keyword">from</span> <span class="string">'vitest'</span>;
+<span class="keyword">const</span> mock = vi.<span class="function">fn</span>();
+
+<span class="comment">// Jest (то же самое!)</span>
+<span class="keyword">const</span> mock = jest.<span class="function">fn</span>();</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matchers -->
+            <div class="section-card bg-white rounded-2xl p-6 shadow-2xl" id="matchers">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>✓</span> Matchers (Assertions)
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Базовые</h3>
+                        <div class="code-block searchable">
+<span class="function">expect</span>(value).<span class="function">toBe</span>(<span class="number">5</span>);                    <span class="comment">// === (strict equality)</span>
+<span class="function">expect</span>(value).<span class="function">toEqual</span>({ a: <span class="number">1</span> });          <span class="comment">// deep equality</span>
+<span class="function">expect</span>(value).<span class="function">toBeTruthy</span>();               <span class="comment">// Boolean(value) === true</span>
+<span class="function">expect</span>(value).<span class="function">toBeFalsy</span>();                <span class="comment">// Boolean(value) === false</span>
+<span class="function">expect</span>(value).<span class="function">toBeNull</span>();                 <span class="comment">// === null</span>
+<span class="function">expect</span>(value).<span class="function">toBeUndefined</span>();            <span class="comment">// === undefined</span>
+<span class="function">expect</span>(value).<span class="function">toBeDefined</span>();              <span class="comment">// !== undefined</span></div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Числа</h3>
+                        <div class="code-block searchable">
+<span class="function">expect</span>(value).<span class="function">toBeGreaterThan</span>(<span class="number">3</span>);         <span class="comment">// > 3</span>
+<span class="function">expect</span>(value).<span class="function">toBeGreaterThanOrEqual</span>(<span class="number">3</span>);  <span class="comment">// >= 3</span>
+<span class="function">expect</span>(value).<span class="function">toBeLessThan</span>(<span class="number">5</span>);            <span class="comment">// < 5</span>
+<span class="function">expect</span>(value).<span class="function">toBeLessThanOrEqual</span>(<span class="number">5</span>);     <span class="comment">// <= 5</span>
+<span class="function">expect</span>(<span class="number">0.1</span> + <span class="number">0.2</span>).<span class="function">toBeCloseTo</span>(<span class="number">0.3</span>);     <span class="comment">// float сравнение</span></div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Строки и Массивы</h3>
+                        <div class="code-block searchable">
+<span class="comment">// Строки</span>
+<span class="function">expect</span>(<span class="string">'hello world'</span>).<span class="function">toMatch</span>(<span class="string">/world/</span>);    <span class="comment">// regex</span>
+<span class="function">expect</span>(<span class="string">'hello'</span>).<span class="function">toContain</span>(<span class="string">'ell'</span>);           <span class="comment">// substring</span>
+<span class="function">expect</span>(<span class="string">'hello'</span>).<span class="function">toHaveLength</span>(<span class="number">5</span>);            <span class="comment">// length</span>
+
+<span class="comment">// Массивы</span>
+<span class="function">expect</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]).<span class="function">toContain</span>(<span class="number">2</span>);            <span class="comment">// includes</span>
+<span class="function">expect</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]).<span class="function">toHaveLength</span>(<span class="number">3</span>);         <span class="comment">// length</span></div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Функции и Ошибки</h3>
+                        <div class="code-block searchable">
+<span class="comment">// Проверка что функция бросает ошибку</span>
+<span class="function">expect</span>(() => { <span class="keyword">throw new</span> <span class="function">Error</span>(<span class="string">'Oops'</span>) }).<span class="function">toThrow</span>();
+<span class="function">expect</span>(() => divide(<span class="number">1</span>, <span class="number">0</span>)).<span class="function">toThrow</span>(<span class="string">'Division by zero'</span>);
+<span class="function">expect</span>(() => badFunc()).<span class="function">toThrow</span>(<span class="function">TypeError</span>);</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mocking -->
+            <div class="section-card bg-white rounded-2xl p-6 shadow-2xl" id="mocking">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>🎭</span> Mocking
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Mock функции (vi.fn)</h3>
+                        <div class="code-block searchable">
+<span class="keyword">import</span> { vi } <span class="keyword">from</span> <span class="string">'vitest'</span>;
+
+<span class="comment">// Создать mock функцию</span>
+<span class="keyword">const</span> mockFn = vi.<span class="function">fn</span>();
+mockFn(<span class="string">'hello'</span>);
+
+<span class="comment">// Проверка вызовов</span>
+<span class="function">expect</span>(mockFn).<span class="function">toHaveBeenCalled</span>();
+<span class="function">expect</span>(mockFn).<span class="function">toHaveBeenCalledTimes</span>(<span class="number">1</span>);
+<span class="function">expect</span>(mockFn).<span class="function">toHaveBeenCalledWith</span>(<span class="string">'hello'</span>);
+
+<span class="comment">// Mock с возвращаемым значением</span>
+<span class="keyword">const</span> mockFn = vi.<span class="function">fn</span>(() => <span class="number">42</span>);
+mockFn.<span class="function">mockReturnValue</span>(<span class="number">100</span>);           <span class="comment">// всегда 100</span>
+mockFn.<span class="function">mockReturnValueOnce</span>(<span class="number">50</span>);        <span class="comment">// первый раз 50</span></div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Mock async функций</h3>
+                        <div class="code-block searchable">
+<span class="keyword">const</span> mockFetch = vi.<span class="function">fn</span>();
+
+<span class="comment">// Mock Promise</span>
+mockFetch.<span class="function">mockResolvedValue</span>({ data: <span class="string">'success'</span> });
+mockFetch.<span class="function">mockRejectedValue</span>(<span class="keyword">new</span> <span class="function">Error</span>(<span class="string">'Failed'</span>));
+
+<span class="comment">// Использование</span>
+<span class="keyword">const</span> result = <span class="keyword">await</span> mockFetch();
+<span class="function">expect</span>(result.data).<span class="function">toBe</span>(<span class="string">'success'</span>);</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Mock модулей (vi.mock)</h3>
+                        <div class="code-block searchable">
+<span class="comment">// Мокируем весь модуль</span>
+vi.<span class="function">mock</span>(<span class="string">'./utils'</span>, () => ({
+  <span class="function">calculateScore</span>: vi.<span class="function">fn</span>(() => <span class="number">100</span>),
+  <span class="function">getUser</span>: vi.<span class="function">fn</span>(() => ({ id: <span class="number">1</span>, name: <span class="string">'Test'</span> })),
+}));
+
+<span class="comment">// Partial mock (часть реальная, часть mock)</span>
+vi.<span class="function">mock</span>(<span class="string">'./utils'</span>, <span class="keyword">async</span> () => {
+  <span class="keyword">const</span> actual = <span class="keyword">await</span> vi.<span class="function">importActual</span>(<span class="string">'./utils'</span>);
+  <span class="keyword">return</span> {
+    ...actual,
+    <span class="function">calculateScore</span>: vi.<span class="function">fn</span>(() => <span class="number">100</span>),
+  };
+});</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Spy на методы (vi.spyOn)</h3>
+                        <div class="code-block searchable">
+<span class="keyword">const</span> obj = {
+  <span class="function">method</span>: () => <span class="string">'original'</span>,
+};
+
+<span class="keyword">const</span> spy = vi.<span class="function">spyOn</span>(obj, <span class="string">'method'</span>);
+spy.<span class="function">mockReturnValue</span>(<span class="string">'mocked'</span>);
+
+obj.<span class="function">method</span>(); <span class="comment">// 'mocked'</span>
+<span class="function">expect</span>(spy).<span class="function">toHaveBeenCalled</span>();
+
+spy.<span class="function">mockRestore</span>(); <span class="comment">// восстановить оригинал</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- React Testing Library -->
+            <div class="section-card bg-white rounded-2xl p-6 shadow-2xl" id="rtl">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>⚛️</span> React Testing Library
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Render компонента</h3>
+                        <div class="code-block searchable">
+<span class="keyword">import</span> { render, screen } <span class="keyword">from</span> <span class="string">'@testing-library/react'</span>;
+<span class="keyword">import</span> { Button } <span class="keyword">from</span> <span class="string">'./Button'</span>;
+
+<span class="function">test</span>(<span class="string">'renders button'</span>, () => {
+  render(&lt;<span class="function">Button</span>&gt;Click me&lt;/<span class="function">Button</span>&gt;);
+
+  <span class="keyword">const</span> button = screen.<span class="function">getByRole</span>(<span class="string">'button'</span>, { name: <span class="string">'Click me'</span> });
+  <span class="function">expect</span>(button).<span class="function">toBeInTheDocument</span>();
+});</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Queries (приоритет)</h3>
+                        <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded mb-2">
+                            <p class="text-sm font-semibold text-gray-700">Используйте в этом порядке (от лучшего к худшему):</p>
+                        </div>
+                        <div class="code-block searchable">
+<span class="comment">// 1. getByRole - ЛУЧШИЙ (accessibility)</span>
+screen.<span class="function">getByRole</span>(<span class="string">'button'</span>, { name: <span class="string">'Submit'</span> });
+screen.<span class="function">getByRole</span>(<span class="string">'textbox'</span>, { name: <span class="string">'Email'</span> });
+screen.<span class="function">getByRole</span>(<span class="string">'heading'</span>, { level: <span class="number">1</span> });
+
+<span class="comment">// 2. getByLabelText - для форм</span>
+screen.<span class="function">getByLabelText</span>(<span class="string">'Username'</span>);
+
+<span class="comment">// 3. getByPlaceholderText</span>
+screen.<span class="function">getByPlaceholderText</span>(<span class="string">'Enter email'</span>);
+
+<span class="comment">// 4. getByText - для текста</span>
+screen.<span class="function">getByText</span>(<span class="string">'Hello World'</span>);
+screen.<span class="function">getByText</span>(<span class="string">/hello/i</span>); <span class="comment">// case insensitive</span>
+
+<span class="comment">// 5. getByTestId - ПОСЛЕДНИЙ RESORT</span>
+screen.<span class="function">getByTestId</span>(<span class="string">'custom-element'</span>);</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Варианты queries</h3>
+                        <div class="code-block searchable">
+<span class="comment">// getBy - найти или упасть (элемент должен быть)</span>
+screen.<span class="function">getByText</span>(<span class="string">'Text'</span>);
+
+<span class="comment">// queryBy - найти или вернуть null (проверка отсутствия)</span>
+<span class="function">expect</span>(screen.<span class="function">queryByText</span>(<span class="string">'Text'</span>)).not.<span class="function">toBeInTheDocument</span>();
+
+<span class="comment">// findBy - async поиск (для элементов, которые появятся)</span>
+<span class="keyword">const</span> element = <span class="keyword">await</span> screen.<span class="function">findByText</span>(<span class="string">'Loaded data'</span>);
+
+<span class="comment">// Множественные элементы</span>
+screen.<span class="function">getAllByRole</span>(<span class="string">'button'</span>);        <span class="comment">// массив или ошибка</span>
+screen.<span class="function">queryAllByRole</span>(<span class="string">'button'</span>);      <span class="comment">// массив или []</span>
+<span class="keyword">await</span> screen.<span class="function">findAllByRole</span>(<span class="string">'button'</span>); <span class="comment">// async массив</span></div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Jest-DOM Matchers</h3>
+                        <div class="code-block searchable">
+<span class="comment">// Видимость</span>
+<span class="function">expect</span>(element).<span class="function">toBeVisible</span>();
+<span class="function">expect</span>(element).<span class="function">toBeInTheDocument</span>();
+
+<span class="comment">// Состояние</span>
+<span class="function">expect</span>(input).<span class="function">toBeDisabled</span>();
+<span class="function">expect</span>(input).<span class="function">toBeEnabled</span>();
+<span class="function">expect</span>(checkbox).<span class="function">toBeChecked</span>();
+<span class="function">expect</span>(input).<span class="function">toHaveValue</span>(<span class="string">'text'</span>);
+<span class="function">expect</span>(input).<span class="function">toHaveFocus</span>();
+
+<span class="comment">// Атрибуты и текст</span>
+<span class="function">expect</span>(element).<span class="function">toHaveAttribute</span>(<span class="string">'href'</span>, <span class="string">'/link'</span>);
+<span class="function">expect</span>(element).<span class="function">toHaveClass</span>(<span class="string">'active'</span>);
+<span class="function">expect</span>(element).<span class="function">toHaveTextContent</span>(<span class="string">'Hello'</span>);</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Events -->
+            <div class="section-card bg-white rounded-2xl p-6 shadow-2xl" id="user-events">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>👆</span> User Events
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Setup и базовые действия</h3>
+                        <div class="code-block searchable">
+<span class="keyword">import</span> { userEvent } <span class="keyword">from</span> <span class="string">'@testing-library/user-event'</span>;
+
+<span class="function">test</span>(<span class="string">'user interactions'</span>, <span class="keyword">async</span> () => {
+  <span class="keyword">const</span> user = userEvent.<span class="function">setup</span>();
+
+  <span class="comment">// Клик</span>
+  <span class="keyword">await</span> user.<span class="function">click</span>(button);
+  <span class="keyword">await</span> user.<span class="function">dblClick</span>(button);
+
+  <span class="comment">// Ввод текста</span>
+  <span class="keyword">await</span> user.<span class="function">type</span>(input, <span class="string">'Hello World'</span>);
+  <span class="keyword">await</span> user.<span class="function">clear</span>(input);
+
+  <span class="comment">// Hover</span>
+  <span class="keyword">await</span> user.<span class="function">hover</span>(element);
+  <span class="keyword">await</span> user.<span class="function">unhover</span>(element);
+});</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Keyboard events</h3>
+                        <div class="code-block searchable">
+<span class="keyword">const</span> user = userEvent.<span class="function">setup</span>();
+
+<span class="comment">// Клавиши</span>
+<span class="keyword">await</span> user.<span class="function">keyboard</span>(<span class="string">'{Enter}'</span>);
+<span class="keyword">await</span> user.<span class="function">keyboard</span>(<span class="string">'{Escape}'</span>);
+<span class="keyword">await</span> user.<span class="function">keyboard</span>(<span class="string">'{Tab}'</span>);
+
+<span class="comment">// Комбинации клавиш</span>
+<span class="keyword">await</span> user.<span class="function">keyboard</span>(<span class="string">'{Shift>}A{/Shift}'</span>); <span class="comment">// Shift+A</span>
+<span class="keyword">await</span> user.<span class="function">keyboard</span>(<span class="string">'{Control>}c{/Control}'</span>); <span class="comment">// Ctrl+C</span></div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Полный пример: LoginForm</h3>
+                        <div class="code-block searchable">
+<span class="function">test</span>(<span class="string">'submits login form'</span>, <span class="keyword">async</span> () => {
+  <span class="keyword">const</span> handleSubmit = vi.<span class="function">fn</span>();
+  render(&lt;<span class="function">LoginForm</span> onSubmit={handleSubmit} /&gt;);
+
+  <span class="keyword">const</span> user = userEvent.<span class="function">setup</span>();
+
+  <span class="comment">// Найти поля</span>
+  <span class="keyword">const</span> emailInput = screen.<span class="function">getByLabelText</span>(<span class="string">'Email'</span>);
+  <span class="keyword">const</span> passwordInput = screen.<span class="function">getByLabelText</span>(<span class="string">'Password'</span>);
+  <span class="keyword">const</span> submitButton = screen.<span class="function">getByRole</span>(<span class="string">'button'</span>, { name: <span class="string">'Login'</span> });
+
+  <span class="comment">// Заполнить форму</span>
+  <span class="keyword">await</span> user.<span class="function">type</span>(emailInput, <span class="string">'test@test.com'</span>);
+  <span class="keyword">await</span> user.<span class="function">type</span>(passwordInput, <span class="string">'password123'</span>);
+
+  <span class="comment">// Отправить</span>
+  <span class="keyword">await</span> user.<span class="function">click</span>(submitButton);
+
+  <span class="comment">// Проверить</span>
+  <span class="function">expect</span>(handleSubmit).<span class="function">toHaveBeenCalledWith</span>({
+    email: <span class="string">'test@test.com'</span>,
+    password: <span class="string">'password123'</span>,
+  });
+});</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Ожидание изменений (waitFor)</h3>
+                        <div class="code-block searchable">
+<span class="keyword">import</span> { waitFor, waitForElementToBeRemoved } <span class="keyword">from</span> <span class="string">'@testing-library/react'</span>;
+
+<span class="comment">// Дождаться пока условие станет true</span>
+<span class="keyword">await</span> <span class="function">waitFor</span>(() => {
+  <span class="function">expect</span>(screen.<span class="function">getByText</span>(<span class="string">'Loaded'</span>)).<span class="function">toBeInTheDocument</span>();
+});
+
+<span class="comment">// С таймаутом</span>
+<span class="keyword">await</span> <span class="function">waitFor</span>(() => {
+  <span class="function">expect</span>(screen.<span class="function">getByText</span>(<span class="string">'Loaded'</span>)).<span class="function">toBeInTheDocument</span>();
+}, { timeout: <span class="number">3000</span> });
+
+<span class="comment">// Дождаться исчезновения</span>
+<span class="keyword">await</span> <span class="function">waitForElementToBeRemoved</span>(() =>
+  screen.<span class="function">getByText</span>(<span class="string">'Loading...'</span>)
+);</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Playwright -->
+            <div class="section-card bg-white rounded-2xl p-6 shadow-2xl" id="playwright">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>🎭</span> Playwright E2E
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Базовый E2E тест</h3>
+                        <div class="code-block searchable">
+<span class="keyword">import</span> { test, expect } <span class="keyword">from</span> <span class="string">'@playwright/test'</span>;
+
+<span class="function">test</span>(<span class="string">'user can login'</span>, <span class="keyword">async</span> ({ page }) => {
+  <span class="comment">// Открыть страницу</span>
+  <span class="keyword">await</span> page.<span class="function">goto</span>(<span class="string">'/'</span>);
+
+  <span class="comment">// Заполнить форму</span>
+  <span class="keyword">await</span> page.<span class="function">fill</span>(<span class="string">'input[name="email"]'</span>, <span class="string">'test@test.com'</span>);
+  <span class="keyword">await</span> page.<span class="function">fill</span>(<span class="string">'input[name="password"]'</span>, <span class="string">'password'</span>);
+
+  <span class="comment">// Кликнуть кнопку</span>
+  <span class="keyword">await</span> page.<span class="function">click</span>(<span class="string">'button[type="submit"]'</span>);
+
+  <span class="comment">// Проверить результат</span>
+  <span class="keyword">await</span> <span class="function">expect</span>(page.<span class="function">locator</span>(<span class="string">'text=Welcome'</span>)).<span class="function">toBeVisible</span>();
+});</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Локаторы (современный подход)</h3>
+                        <div class="code-block searchable">
+<span class="comment">// Role (ЛУЧШИЙ - accessibility)</span>
+page.<span class="function">getByRole</span>(<span class="string">'button'</span>, { name: <span class="string">'Submit'</span> });
+page.<span class="function">getByRole</span>(<span class="string">'textbox'</span>, { name: <span class="string">'Email'</span> });
+
+<span class="comment">// Text</span>
+page.<span class="function">getByText</span>(<span class="string">'Submit'</span>);
+page.<span class="function">getByText</span>(<span class="string">/submit/i</span>); <span class="comment">// regex, case insensitive</span>
+
+<span class="comment">// Label</span>
+page.<span class="function">getByLabel</span>(<span class="string">'Email'</span>);
+
+<span class="comment">// Placeholder</span>
+page.<span class="function">getByPlaceholder</span>(<span class="string">'Enter email'</span>);
+
+<span class="comment">// CSS селектор (последний resort)</span>
+page.<span class="function">locator</span>(<span class="string">'.class-name'</span>);
+page.<span class="function">locator</span>(<span class="string">'#id'</span>);</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Действия</h3>
+                        <div class="code-block searchable">
+<span class="comment">// Клики</span>
+<span class="keyword">await</span> page.<span class="function">click</span>(<span class="string">'button'</span>);
+<span class="keyword">await</span> page.<span class="function">dblclick</span>(<span class="string">'button'</span>);
+
+<span class="comment">// Ввод текста</span>
+<span class="keyword">await</span> page.<span class="function">fill</span>(<span class="string">'input'</span>, <span class="string">'text'</span>);           <span class="comment">// быстро (заменяет)</span>
+<span class="keyword">await</span> page.<span class="function">type</span>(<span class="string">'input'</span>, <span class="string">'text'</span>);          <span class="comment">// медленно (имитирует набор)</span>
+
+<span class="comment">// Checkbox и select</span>
+<span class="keyword">await</span> page.<span class="function">check</span>(<span class="string">'checkbox'</span>);
+<span class="keyword">await</span> page.<span class="function">uncheck</span>(<span class="string">'checkbox'</span>);
+<span class="keyword">await</span> page.<span class="function">selectOption</span>(<span class="string">'select'</span>, <span class="string">'value'</span>);
+
+<span class="comment">// Keyboard</span>
+<span class="keyword">await</span> page.<span class="function">press</span>(<span class="string">'input'</span>, <span class="string">'Enter'</span>);
+<span class="keyword">await</span> page.<span class="function">keyboard.press</span>(<span class="string">'Control+A'</span>);</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Assertions</h3>
+                        <div class="code-block searchable">
+<span class="comment">// Видимость</span>
+<span class="keyword">await</span> <span class="function">expect</span>(page.<span class="function">locator</span>(<span class="string">'text=Hello'</span>)).<span class="function">toBeVisible</span>();
+<span class="keyword">await</span> <span class="function">expect</span>(page.<span class="function">locator</span>(<span class="string">'button'</span>)).<span class="function">toBeHidden</span>();
+
+<span class="comment">// Состояние</span>
+<span class="keyword">await</span> <span class="function">expect</span>(page.<span class="function">locator</span>(<span class="string">'button'</span>)).<span class="function">toBeDisabled</span>();
+<span class="keyword">await</span> <span class="function">expect</span>(page.<span class="function">locator</span>(<span class="string">'button'</span>)).<span class="function">toBeEnabled</span>();
+
+<span class="comment">// Значения и текст</span>
+<span class="keyword">await</span> <span class="function">expect</span>(page.<span class="function">locator</span>(<span class="string">'input'</span>)).<span class="function">toHaveValue</span>(<span class="string">'text'</span>);
+<span class="keyword">await</span> <span class="function">expect</span>(page.<span class="function">locator</span>(<span class="string">'h1'</span>)).<span class="function">toHaveText</span>(<span class="string">'Title'</span>);
+<span class="keyword">await</span> <span class="function">expect</span>(page.<span class="function">locator</span>(<span class="string">'a'</span>)).<span class="function">toHaveAttribute</span>(<span class="string">'href'</span>, <span class="string">'/link'</span>);
+
+<span class="comment">// URL</span>
+<span class="keyword">await</span> <span class="function">expect</span>(page).<span class="function">toHaveURL</span>(<span class="string">'/dashboard'</span>);</div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Полный E2E пример: Quiz App</h3>
+                        <div class="code-block searchable">
+<span class="function">test</span>(<span class="string">'complete quiz flow'</span>, <span class="keyword">async</span> ({ page }) => {
+  <span class="comment">// Открыть приложение</span>
+  <span class="keyword">await</span> page.<span class="function">goto</span>(<span class="string">'http://localhost:5173'</span>);
+
+  <span class="comment">// Начать квиз</span>
+  <span class="keyword">await</span> page.<span class="function">getByRole</span>(<span class="string">'button'</span>, { name: <span class="string">'Start Quiz'</span> }).<span class="function">click</span>();
+
+  <span class="comment">// Ответить на вопрос</span>
+  <span class="keyword">await</span> page.<span class="function">getByText</span>(<span class="string">'Answer A'</span>).<span class="function">click</span>();
+  <span class="keyword">await</span> page.<span class="function">getByRole</span>(<span class="string">'button'</span>, { name: <span class="string">'Next'</span> }).<span class="function">click</span>();
+
+  <span class="comment">// Завершить квиз</span>
+  <span class="keyword">await</span> page.<span class="function">getByRole</span>(<span class="string">'button'</span>, { name: <span class="string">'Finish'</span> }).<span class="function">click</span>();
+
+  <span class="comment">// Проверить результат</span>
+  <span class="keyword">await</span> <span class="function">expect</span>(page.<span class="function">getByText</span>(<span class="string">/Score:/</span>)).<span class="function">toBeVisible</span>();
+  <span class="keyword">await</span> <span class="function">expect</span>(page).<span class="function">toHaveURL</span>(<span class="string">/.*\/results/</span>);
+});</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Practices -->
+            <div class="section-card bg-white rounded-2xl p-6 shadow-2xl col-span-1 lg:col-span-2">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>💡</span> Best Practices
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                        <h3 class="font-semibold text-green-800 mb-2">✅ DO</h3>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• Тестируйте поведение, не implementation details</li>
+                            <li>• Используйте getByRole где возможно (accessibility)</li>
+                            <li>• Один тест = одна проверка (KISS)</li>
+                            <li>• Используйте AAA pattern (Arrange, Act, Assert)</li>
+                            <li>• Именуйте тесты понятно: "should do X when Y"</li>
+                            <li>• Используйте beforeEach для setup</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                        <h3 class="font-semibold text-red-800 mb-2">❌ DON'T</h3>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• Не тестируйте внутреннее состояние компонента</li>
+                            <li>• Не используйте .toBeTruthy() для конкретных значений</li>
+                            <li>• Не мокайте всё подряд</li>
+                            <li>• Не делайте слишком длинные тесты</li>
+                            <li>• Не забывайте await для async операций</li>
+                            <li>• Не используйте getByTestId без крайней необходимости</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                        <h3 class="font-semibold text-blue-800 mb-2">🎯 Тестовая пирамида</h3>
+                        <div class="text-sm text-gray-700">
+                            <div class="mb-2">
+                                <div class="flex justify-between mb-1">
+                                    <span>E2E (5-10%)</span>
+                                    <span class="text-xs">Медленные, хрупкие</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-red-500 h-2 rounded-full" style="width: 10%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="flex justify-between mb-1">
+                                    <span>Integration (20-30%)</span>
+                                    <span class="text-xs">Средние</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 30%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Unit (60-70%)</span>
+                                    <span class="text-xs">Быстрые, надежные</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 70%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                        <h3 class="font-semibold text-purple-800 mb-2">🐛 Debugging</h3>
+                        <div class="code-block searchable">
+<span class="comment">// RTL - вывести DOM</span>
+screen.<span class="function">debug</span>();
+screen.<span class="function">debug</span>(element);
+
+<span class="comment">// RTL - доступные queries</span>
+screen.<span class="function">logTestingPlaygroundURL</span>();
+
+<span class="comment">// Playwright - pause</span>
+<span class="keyword">await</span> page.<span class="function">pause</span>();
+
+<span class="comment">// Playwright - screenshot</span>
+<span class="keyword">await</span> page.<span class="function">screenshot</span>({
+  path: <span class="string">'screenshot.png'</span>
+});</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-white opacity-80">
+            <p class="text-lg font-semibold mb-2">🧪 Testing с Vitest & Playwright</p>
+            <p class="text-sm">Используйте поиск выше для быстрого нахождения нужных примеров!</p>
+            <p class="text-xs mt-2">💡 Помните: Vitest и Jest на 95% совместимы - просто замените vi на jest</p>
+        </footer>
+    </div>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Search functionality
+        function searchCode() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const codeBlocks = document.querySelectorAll('.searchable');
+            let matchCount = 0;
+
+            codeBlocks.forEach(block => {
+                // Remove previous highlights
+                let content = block.innerHTML;
+                content = content.replace(/<span class="search-highlight">(.*?)<\/span>/g, '$1');
+
+                if (searchTerm) {
+                    // Create regex for highlighting (case insensitive)
+                    const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+
+                    // Check if block contains search term
+                    if (block.textContent.toLowerCase().includes(searchTerm)) {
+                        matchCount++;
+                        // Highlight matches
+                        content = content.replace(regex, '<span class="search-highlight">$1</span>');
+                        block.style.display = 'block';
+                        block.closest('.section-card').style.display = 'block';
+                    } else {
+                        block.style.display = 'none';
+                    }
+                } else {
+                    block.style.display = 'block';
+                    block.closest('.section-card').style.display = 'block';
+                }
+
+                block.innerHTML = content;
+            });
+
+            // Update match count
+            document.getElementById('searchCount').textContent = searchTerm ? matchCount : '0';
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchCode();
+        }
+
+        function escapeRegex(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Initialize search count
+        document.getElementById('searchCount').textContent = '0';
+    </script>
+</body>
+</html>

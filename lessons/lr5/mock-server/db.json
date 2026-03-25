@@ -1,0 +1,348 @@
+{
+  "users": [
+    {
+      "id": "usr_admin",
+      "githubId": "1",
+      "username": "admin",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1",
+      "email": "admin@example.com",
+      "role": "admin",
+      "createdAt": "2025-01-10T10:00:00Z"
+    },
+    {
+      "id": "usr_student1",
+      "githubId": "2",
+      "username": "student1",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/2",
+      "email": "student1@example.com",
+      "role": "student",
+      "createdAt": "2025-01-12T10:00:00Z"
+    },
+    {
+      "id": "usr_student2",
+      "githubId": "3",
+      "username": "student2",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/3",
+      "email": "student2@example.com",
+      "role": "student",
+      "createdAt": "2025-01-13T10:00:00Z"
+    }
+  ],
+  "userDifficultySettings": [
+    {
+      "userId": "usr_student1",
+      "difficulty": "medium",
+      "questionCount": 15,
+      "categoryIds": ["cat_react", "cat_typescript"],
+      "updatedAt": "2025-01-14T09:00:00Z",
+      "updatedBy": "usr_admin"
+    }
+  ],
+  "mode": {
+    "mode": "game",
+    "battleConfig": null
+  },
+  "categories": [
+    {
+      "id": "cat_react",
+      "name": "React Hooks",
+      "slug": "react-hooks",
+      "description": "Вопросы по хукам в React",
+      "questionCount": 5
+    },
+    {
+      "id": "cat_typescript",
+      "name": "TypeScript",
+      "slug": "typescript",
+      "description": "Типизация и TypeScript",
+      "questionCount": 3
+    },
+    {
+      "id": "cat_api",
+      "name": "Работа с API",
+      "slug": "api",
+      "description": "React Query, fetch, axios",
+      "questionCount": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "q_001",
+      "type": "multiple-select",
+      "question": "Какие хуки используются для side effects в React?",
+      "difficulty": "medium",
+      "categoryId": "cat_react",
+      "maxPoints": 4,
+      "options": [
+        {
+          "text": "useState",
+          "points": 0,
+          "isCorrect": false
+        },
+        {
+          "text": "useEffect",
+          "points": 2,
+          "isCorrect": true
+        },
+        {
+          "text": "useLayoutEffect",
+          "points": 2,
+          "isCorrect": true
+        },
+        {
+          "text": "useMemo",
+          "points": 0,
+          "isCorrect": false
+        }
+      ],
+      "penaltyPerWrong": -1,
+      "minScore": 0,
+      "createdAt": "2025-01-10T10:00:00Z",
+      "updatedAt": "2025-01-10T10:00:00Z"
+    },
+    {
+      "id": "q_002",
+      "type": "multiple-select",
+      "question": "Какие из перечисленных методов являются HTTP-методами?",
+      "difficulty": "easy",
+      "categoryId": "cat_api",
+      "maxPoints": 5,
+      "options": [
+        {
+          "text": "GET",
+          "points": 1,
+          "isCorrect": true
+        },
+        {
+          "text": "PUSH",
+          "points": 0,
+          "isCorrect": false
+        },
+        {
+          "text": "POST",
+          "points": 1,
+          "isCorrect": true
+        },
+        {
+          "text": "FETCH",
+          "points": 0,
+          "isCorrect": false
+        },
+        {
+          "text": "DELETE",
+          "points": 2,
+          "isCorrect": true
+        },
+        {
+          "text": "PATCH",
+          "points": 1,
+          "isCorrect": true
+        }
+      ],
+      "penaltyPerWrong": -1,
+      "minScore": 0,
+      "createdAt": "2025-01-10T10:00:00Z",
+      "updatedAt": "2025-01-10T10:00:00Z"
+    },
+    {
+      "id": "q_003",
+      "type": "essay",
+      "question": "Объясните разницу между useMemo и useCallback. Приведите примеры использования.",
+      "difficulty": "hard",
+      "categoryId": "cat_react",
+      "maxPoints": 5,
+      "minLength": 100,
+      "maxLength": 1000,
+      "rubric": [
+        {
+          "criterion": "Понимание useMemo",
+          "maxPoints": 2,
+          "description": "Объясняет, что useMemo мемоизирует вычисленные значения"
+        },
+        {
+          "criterion": "Понимание useCallback",
+          "maxPoints": 2,
+          "description": "Объясняет, что useCallback мемоизирует функции"
+        },
+        {
+          "criterion": "Примеры использования",
+          "maxPoints": 1,
+          "description": "Приводит корректные примеры кода"
+        }
+      ],
+      "createdAt": "2025-01-10T10:00:00Z",
+      "updatedAt": "2025-01-10T10:00:00Z"
+    },
+    {
+      "id": "q_004",
+      "type": "multiple-select",
+      "question": "Какие типы данных существуют в TypeScript?",
+      "difficulty": "easy",
+      "categoryId": "cat_typescript",
+      "maxPoints": 6,
+      "options": [
+        {
+          "text": "string",
+          "points": 1,
+          "isCorrect": true
+        },
+        {
+          "text": "int",
+          "points": 0,
+          "isCorrect": false
+        },
+        {
+          "text": "number",
+          "points": 1,
+          "isCorrect": true
+        },
+        {
+          "text": "boolean",
+          "points": 1,
+          "isCorrect": true
+        },
+        {
+          "text": "any",
+          "points": 1,
+          "isCorrect": true
+        },
+        {
+          "text": "array",
+          "points": 0,
+          "isCorrect": false
+        },
+        {
+          "text": "unknown",
+          "points": 2,
+          "isCorrect": true
+        }
+      ],
+      "penaltyPerWrong": -1,
+      "minScore": 0,
+      "createdAt": "2025-01-10T10:00:00Z",
+      "updatedAt": "2025-01-10T10:00:00Z"
+    },
+    {
+      "id": "q_005",
+      "type": "multiple-select",
+      "question": "Что делает React Query автоматически?",
+      "difficulty": "medium",
+      "categoryId": "cat_api",
+      "maxPoints": 5,
+      "options": [
+        {
+          "text": "Кэширование данных",
+          "points": 2,
+          "isCorrect": true
+        },
+        {
+          "text": "Валидация форм",
+          "points": 0,
+          "isCorrect": false
+        },
+        {
+          "text": "Фоновое обновление данных",
+          "points": 2,
+          "isCorrect": true
+        },
+        {
+          "text": "Дедупликация запросов",
+          "points": 1,
+          "isCorrect": true
+        },
+        {
+          "text": "Рендеринг компонентов",
+          "points": 0,
+          "isCorrect": false
+        }
+      ],
+      "penaltyPerWrong": -1,
+      "minScore": 0,
+      "createdAt": "2025-01-10T10:00:00Z",
+      "updatedAt": "2025-01-10T10:00:00Z"
+    },
+    {
+      "id": "q_006",
+      "type": "essay",
+      "question": "Опишите жизненный цикл компонента в React. Какие методы вызываются на каждом этапе?",
+      "difficulty": "hard",
+      "categoryId": "cat_react",
+      "maxPoints": 8,
+      "minLength": 200,
+      "maxLength": 1500,
+      "rubric": [
+        {
+          "criterion": "Понимание mounting фазы",
+          "maxPoints": 3,
+          "description": "Объясняет constructor, render, componentDidMount"
+        },
+        {
+          "criterion": "Понимание updating фазы",
+          "maxPoints": 3,
+          "description": "Объясняет shouldComponentUpdate, render, componentDidUpdate"
+        },
+        {
+          "criterion": "Понимание unmounting фазы",
+          "maxPoints": 2,
+          "description": "Объясняет componentWillUnmount и cleanup"
+        }
+      ],
+      "createdAt": "2025-01-10T10:00:00Z",
+      "updatedAt": "2025-01-10T10:00:00Z"
+    }
+  ],
+  "sessions": [
+    {
+      "sessionId": "sess_001",
+      "userId": "usr_student1",
+      "status": "completed",
+      "mode": "game",
+      "questionIds": ["q_001", "q_002", "q_004"],
+      "totalQuestions": 3,
+      "answeredCount": 3,
+      "maxScore": 15,
+      "currentScore": 12,
+      "createdAt": "2025-01-15T10:00:00Z",
+      "completedAt": "2025-01-15T10:45:00Z",
+      "expiresAt": null
+    }
+  ],
+  "answers": [
+    {
+      "answerId": "ans_001",
+      "sessionId": "sess_001",
+      "questionId": "q_001",
+      "userId": "usr_student1",
+      "selectedOptions": [1, 2],
+      "status": "correct",
+      "pointsEarned": 4,
+      "maxPoints": 4,
+      "feedback": "Отлично! Все правильные ответы выбраны.",
+      "createdAt": "2025-01-15T10:10:00Z"
+    },
+    {
+      "answerId": "ans_002",
+      "sessionId": "sess_001",
+      "questionId": "q_002",
+      "userId": "usr_student1",
+      "selectedOptions": [0, 2, 4, 5],
+      "status": "correct",
+      "pointsEarned": 5,
+      "maxPoints": 5,
+      "feedback": "Правильно! Все HTTP-методы определены верно.",
+      "createdAt": "2025-01-15T10:20:00Z"
+    },
+    {
+      "answerId": "ans_003",
+      "sessionId": "sess_001",
+      "questionId": "q_004",
+      "userId": "usr_student1",
+      "selectedOptions": [0, 2, 3, 4, 5],
+      "status": "partial",
+      "pointsEarned": 3,
+      "maxPoints": 6,
+      "feedback": "Частично правильно. Вы выбрали неправильный вариант 'array' и пропустили 'unknown'.",
+      "createdAt": "2025-01-15T10:30:00Z"
+    }
+  ]
+}

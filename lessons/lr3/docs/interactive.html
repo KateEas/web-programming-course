@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tailwind CSS - Интерактивные примеры</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clifford: '#da373d',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .code-preview {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .demo-box {
+            min-height: 100px;
+            transition: all 0.3s ease;
+        }
+        .color-swatch {
+            width: 100px;
+            height: 100px;
+            display: inline-block;
+            border-radius: 0.5rem;
+            margin: 0.5rem;
+            transition: transform 0.2s;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                🎨 Tailwind CSS
+            </h1>
+            <p class="text-xl text-white opacity-90">
+                Интерактивные примеры и практические упражнения
+            </p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-8">
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#layout" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Layout</a>
+                <a href="#flexbox" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Flexbox</a>
+                <a href="#grid" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Grid</a>
+                <a href="#colors" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Colors</a>
+                <a href="#responsive" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Responsive</a>
+                <a href="#components" class="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition">Components</a>
+            </div>
+        </nav>
+
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Layout -->
+            <div class="bg-white rounded-2xl p-6 shadow-2xl" id="layout">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>📐</span> Layout & Display
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Display Types</h3>
+                        <div class="space-y-2">
+                            <div class="block bg-blue-100 p-2 rounded">block</div>
+                            <div class="inline-block bg-green-100 p-2 rounded mr-2">inline-block 1</div>
+                            <div class="inline-block bg-green-100 p-2 rounded">inline-block 2</div>
+                            <div class="flex bg-purple-100 p-2 rounded gap-2">
+                                <div class="bg-purple-300 p-2 rounded">flex item 1</div>
+                                <div class="bg-purple-300 p-2 rounded">flex item 2</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-2">💡 Попробуйте изменить размер окна!</p>
+                        <div class="hidden md:block bg-blue-500 text-white p-2 rounded">
+                            Видно только на планшетах и десктопах (md:block)
+                        </div>
+                        <div class="md:hidden bg-red-500 text-white p-2 rounded mt-2">
+                            Видно только на мобильных (md:hidden)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flexbox -->
+            <div class="bg-white rounded-2xl p-6 shadow-2xl" id="flexbox">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>↔️</span> Flexbox
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">justify-between</p>
+                        <div class="flex justify-between bg-blue-100 p-4 rounded">
+                            <div class="bg-blue-500 text-white px-4 py-2 rounded">Item 1</div>
+                            <div class="bg-blue-500 text-white px-4 py-2 rounded">Item 2</div>
+                            <div class="bg-blue-500 text-white px-4 py-2 rounded">Item 3</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">items-center</p>
+                        <div class="flex items-center bg-green-100 p-4 rounded h-32">
+                            <div class="bg-green-500 text-white px-4 py-2 rounded">Centered</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">gap-4</p>
+                        <div class="flex gap-4 bg-purple-100 p-4 rounded flex-wrap">
+                            <div class="bg-purple-500 text-white px-4 py-2 rounded">1</div>
+                            <div class="bg-purple-500 text-white px-4 py-2 rounded">2</div>
+                            <div class="bg-purple-500 text-white px-4 py-2 rounded">3</div>
+                            <div class="bg-purple-500 text-white px-4 py-2 rounded">4</div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Demo -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="font-semibold mb-2">🎮 Интерактивный пример</p>
+                        <select id="flexDirection" class="border rounded px-2 py-1 mb-2 w-full">
+                            <option value="flex-row">flex-row</option>
+                            <option value="flex-col">flex-col</option>
+                            <option value="flex-row-reverse">flex-row-reverse</option>
+                        </select>
+                        <select id="justifyContent" class="border rounded px-2 py-1 mb-2 w-full">
+                            <option value="justify-start">justify-start</option>
+                            <option value="justify-center">justify-center</option>
+                            <option value="justify-end">justify-end</option>
+                            <option value="justify-between">justify-between</option>
+                        </select>
+                        <div id="flexDemo" class="flex justify-start flex-row bg-gray-200 p-4 rounded min-h-24">
+                            <div class="bg-blue-500 text-white px-3 py-2 rounded m-1">A</div>
+                            <div class="bg-red-500 text-white px-3 py-2 rounded m-1">B</div>
+                            <div class="bg-green-500 text-white px-3 py-2 rounded m-1">C</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid -->
+            <div class="bg-white rounded-2xl p-6 shadow-2xl" id="grid">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>⊞</span> Grid Layout
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">grid grid-cols-3 gap-4</p>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-indigo-500 text-white p-4 rounded text-center">1</div>
+                            <div class="bg-indigo-500 text-white p-4 rounded text-center">2</div>
+                            <div class="bg-indigo-500 text-white p-4 rounded text-center">3</div>
+                            <div class="bg-indigo-500 text-white p-4 rounded text-center">4</div>
+                            <div class="bg-indigo-500 text-white p-4 rounded text-center">5</div>
+                            <div class="bg-indigo-500 text-white p-4 rounded text-center">6</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">col-span-2</p>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="col-span-2 bg-pink-500 text-white p-4 rounded text-center">Span 2</div>
+                            <div class="bg-pink-300 text-white p-4 rounded text-center">1</div>
+                            <div class="bg-pink-300 text-white p-4 rounded text-center">2</div>
+                            <div class="col-span-2 bg-pink-500 text-white p-4 rounded text-center">Span 2</div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Grid -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="font-semibold mb-2">🎮 Изменить количество колонок</p>
+                        <input
+                            type="range"
+                            id="gridCols"
+                            min="1"
+                            max="6"
+                            value="3"
+                            class="w-full mb-2"
+                        />
+                        <p class="text-sm text-gray-600 mb-2">Колонок: <span id="colCount">3</span></p>
+                        <div id="gridDemo" class="grid grid-cols-3 gap-4">
+                            <div class="bg-teal-500 text-white p-4 rounded text-center">1</div>
+                            <div class="bg-teal-500 text-white p-4 rounded text-center">2</div>
+                            <div class="bg-teal-500 text-white p-4 rounded text-center">3</div>
+                            <div class="bg-teal-500 text-white p-4 rounded text-center">4</div>
+                            <div class="bg-teal-500 text-white p-4 rounded text-center">5</div>
+                            <div class="bg-teal-500 text-white p-4 rounded text-center">6</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colors -->
+            <div class="bg-white rounded-2xl p-6 shadow-2xl" id="colors">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>🎨</span> Colors & Backgrounds
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">Color Scale (500)</p>
+                        <div class="flex flex-wrap">
+                            <div class="color-swatch bg-gray-500" title="gray-500"></div>
+                            <div class="color-swatch bg-red-500" title="red-500"></div>
+                            <div class="color-swatch bg-yellow-500" title="yellow-500"></div>
+                            <div class="color-swatch bg-green-500" title="green-500"></div>
+                            <div class="color-swatch bg-blue-500" title="blue-500"></div>
+                            <div class="color-swatch bg-indigo-500" title="indigo-500"></div>
+                            <div class="color-swatch bg-purple-500" title="purple-500"></div>
+                            <div class="color-swatch bg-pink-500" title="pink-500"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">Gradients</p>
+                        <div class="space-y-2">
+                            <div class="bg-gradient-to-r from-cyan-500 to-blue-500 p-4 rounded text-white text-center font-semibold">
+                                Cyan to Blue
+                            </div>
+                            <div class="bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 p-4 rounded text-white text-center font-semibold">
+                                Purple via Pink to Red
+                            </div>
+                            <div class="bg-gradient-to-br from-green-400 to-blue-500 p-4 rounded text-white text-center font-semibold">
+                                Bottom-right gradient
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Color Demo -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="font-semibold mb-2">🎨 Изменить цвет</p>
+                        <select id="colorPicker" class="border rounded px-2 py-1 mb-2 w-full">
+                            <option value="blue">Blue</option>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="purple">Purple</option>
+                            <option value="pink">Pink</option>
+                        </select>
+                        <select id="colorShade" class="border rounded px-2 py-1 mb-2 w-full">
+                            <option value="300">300 (Light)</option>
+                            <option value="500" selected>500 (Medium)</option>
+                            <option value="700">700 (Dark)</option>
+                        </select>
+                        <div id="colorDemo" class="bg-blue-500 p-8 rounded text-white text-center font-semibold">
+                            Interactive Color Box
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Responsive -->
+            <div class="bg-white rounded-2xl p-6 shadow-2xl" id="responsive">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>📱</span> Responsive Design
+                </h2>
+
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="font-semibold mb-2">Текущий breakpoint:</p>
+                        <div class="text-2xl font-bold">
+                            <span class="sm:hidden text-red-600">Base (&lt;640px)</span>
+                            <span class="hidden sm:inline md:hidden text-orange-600">SM (≥640px)</span>
+                            <span class="hidden md:inline lg:hidden text-yellow-600">MD (≥768px)</span>
+                            <span class="hidden lg:inline xl:hidden text-green-600">LG (≥1024px)</span>
+                            <span class="hidden xl:inline 2xl:hidden text-blue-600">XL (≥1280px)</span>
+                            <span class="hidden 2xl:inline text-purple-600">2XL (≥1536px)</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">Responsive Grid</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="bg-gradient-to-br from-red-400 to-pink-500 p-4 rounded text-white text-center">1</div>
+                            <div class="bg-gradient-to-br from-yellow-400 to-orange-500 p-4 rounded text-white text-center">2</div>
+                            <div class="bg-gradient-to-br from-green-400 to-teal-500 p-4 rounded text-white text-center">3</div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            1 col (mobile) → 2 cols (tablet) → 3 cols (desktop)
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">Responsive Text</p>
+                        <p class="text-sm md:text-base lg:text-lg xl:text-xl bg-blue-100 p-4 rounded">
+                            Этот текст меняет размер в зависимости от ширины экрана
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 mb-2">Responsive Button</p>
+                        <button class="w-full lg:w-auto bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                            Кнопка (Full width → Auto)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Components -->
+            <div class="bg-white rounded-2xl p-6 shadow-2xl col-span-1 lg:col-span-2" id="components">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>🧩</span> Готовые компоненты
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Card -->
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-3">Card Component</h3>
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-xl transition-shadow p-6">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full"></div>
+                                <div>
+                                    <h4 class="font-bold text-lg">Card Title</h4>
+                                    <p class="text-gray-500 text-sm">Subtitle text</p>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 mb-4">
+                                This is a card component with hover effect and shadow.
+                            </p>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition">
+                                Action
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Alert -->
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-3">Alert Component</h3>
+                        <div class="space-y-3">
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-blue-500">ℹ️</span>
+                                    <p class="text-blue-700 font-medium">Info alert</p>
+                                </div>
+                            </div>
+                            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-green-500">✓</span>
+                                    <p class="text-green-700 font-medium">Success alert</p>
+                                </div>
+                            </div>
+                            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-red-500">⚠</span>
+                                    <p class="text-red-700 font-medium">Error alert</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form -->
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-3">Form Component</h3>
+                        <form class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="you@example.com"
+                                />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                                <textarea
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                    rows="3"
+                                    placeholder="Your message..."
+                                ></textarea>
+                            </div>
+                            <button
+                                type="button"
+                                class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition"
+                            >
+                                Send Message
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Badge & Pills -->
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-3">Badges & Pills</h3>
+                        <div class="space-y-4">
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Default</span>
+                                <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">Success</span>
+                                <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">Warning</span>
+                                <span class="bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full">Error</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-lg">React</span>
+                                <span class="bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg">TypeScript</span>
+                                <span class="bg-cyan-500 text-white text-sm font-medium px-4 py-2 rounded-lg">Tailwind</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hover Effects -->
+            <div class="bg-white rounded-2xl p-6 shadow-2xl col-span-1 lg:col-span-2">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>✨</span> Hover & Transition Effects
+                </h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-gradient-to-br from-blue-400 to-blue-600 p-6 rounded-xl text-white text-center transform hover:scale-105 transition cursor-pointer">
+                        <p class="font-semibold">Scale on Hover</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-400 to-purple-600 p-6 rounded-xl text-white text-center hover:rotate-3 transition cursor-pointer">
+                        <p class="font-semibold">Rotate on Hover</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-pink-400 to-pink-600 p-6 rounded-xl text-white text-center hover:shadow-2xl transition cursor-pointer">
+                        <p class="font-semibold">Shadow on Hover</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-400 to-green-600 p-6 rounded-xl text-white text-center opacity-80 hover:opacity-100 transition cursor-pointer">
+                        <p class="font-semibold">Opacity on Hover</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-yellow-400 to-orange-600 p-6 rounded-xl text-white text-center transform hover:-translate-y-2 transition cursor-pointer">
+                        <p class="font-semibold">Move Up on Hover</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-red-400 to-red-600 p-6 rounded-xl text-white text-center border-4 border-transparent hover:border-white transition cursor-pointer">
+                        <p class="font-semibold">Border on Hover</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-white opacity-80">
+            <p class="text-lg font-semibold mb-2">🚀 Tailwind CSS - Интерактивное руководство</p>
+            <p class="text-sm">Практикуйтесь, экспериментируйте и создавайте потрясающие интерфейсы!</p>
+        </footer>
+    </div>
+
+    <script>
+        // Flexbox Demo
+        const flexDirection = document.getElementById('flexDirection');
+        const justifyContent = document.getElementById('justifyContent');
+        const flexDemo = document.getElementById('flexDemo');
+
+        function updateFlexbox() {
+            flexDemo.className = `flex ${flexDirection.value} ${justifyContent.value} bg-gray-200 p-4 rounded min-h-24`;
+        }
+
+        flexDirection.addEventListener('change', updateFlexbox);
+        justifyContent.addEventListener('change', updateFlexbox);
+
+        // Grid Demo
+        const gridCols = document.getElementById('gridCols');
+        const colCount = document.getElementById('colCount');
+        const gridDemo = document.getElementById('gridDemo');
+
+        gridCols.addEventListener('input', (e) => {
+            const cols = e.target.value;
+            colCount.textContent = cols;
+            gridDemo.className = `grid grid-cols-${cols} gap-4`;
+        });
+
+        // Color Demo
+        const colorPicker = document.getElementById('colorPicker');
+        const colorShade = document.getElementById('colorShade');
+        const colorDemo = document.getElementById('colorDemo');
+
+        function updateColor() {
+            const color = colorPicker.value;
+            const shade = colorShade.value;
+            colorDemo.className = `bg-${color}-${shade} p-8 rounded text-white text-center font-semibold transition-colors duration-300`;
+        }
+
+        colorPicker.addEventListener('change', updateColor);
+        colorShade.addEventListener('change', updateColor);
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript - Интерактивный справочник</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .filter-btn.active {
+            background: white;
+            color: #3b82f6;
+        }
+
+        .concepts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .concept-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .concept-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .concept-name {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .concept-type {
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .difficulty-badge {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .difficulty-beginner {
+            background: #e8f5e8;
+            color: #2d5a2d;
+        }
+
+        .difficulty-intermediate {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .difficulty-advanced {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .concept-description {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .example-container {
+            margin: 15px 0;
+        }
+
+        .example-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .view-toggle {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .copy-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #2563eb;
+        }
+
+        .run-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .run-btn:hover {
+            background: #059669;
+        }
+
+        .code-example {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .code-example pre {
+            margin: 0;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .output-example {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            min-height: 60px;
+            display: none;
+        }
+
+        .output-example.active {
+            display: block;
+        }
+
+        .code-example.hidden {
+            display: none;
+        }
+
+        .try-it-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 2px dashed #cbd5e1;
+        }
+
+        .try-it-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .external-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .controls {
+                flex-direction: column;
+            }
+            .concepts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TypeScript - Интерактивный справочник</h1>
+            <p>Изучайте TypeScript с интерактивными примерами кода</p>
+            <div style="margin-top: 15px;">
+                <a href="https://www.typescriptlang.org/docs/" target="_blank" style="color: #3b82f6; text-decoration: none; margin-right: 20px;">📖 TypeScript Docs</a>
+                <a href="https://www.typescriptlang.org/play" target="_blank" style="color: #3b82f6; text-decoration: none;">🎮 TS Playground</a>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Поиск концепций... (например: interface, generic, union)">
+                <span class="search-icon">🔍</span>
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-category="all">Все концепции</button>
+                <button class="filter-btn" data-category="beginner">Начальный</button>
+                <button class="filter-btn" data-category="intermediate">Средний</button>
+                <button class="filter-btn" data-category="advanced">Продвинутый</button>
+            </div>
+        </div>
+
+        <div class="concepts-grid" id="conceptsGrid"></div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalConcepts">0</span>
+                <span class="stat-label">Всего концепций</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="visibleConcepts">0</span>
+                <span class="stat-label">Показано</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const concepts = [
+            {
+                name: 'Базовые типы',
+                category: 'beginner',
+                description: 'Основные типы данных в TypeScript: string, number, boolean',
+                code: `// Базовые типы
+let name: string = "Анна";
+let age: number = 25;
+let isStudent: boolean = true;
+
+// Type inference - TS сам выводит тип
+let city = "Москва";     // string
+let score = 100;         // number
+let active = false;      // boolean
+
+console.log(\`\${name}, \${age} лет, студент: \${isStudent}\`);`,
+                output: `Анна, 25 лет, студент: true`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/everyday-types.html'
+            },
+            {
+                name: 'Массивы',
+                category: 'beginner',
+                description: 'Типизация массивов в TypeScript',
+                code: `// Разные способы объявления массивов
+let numbers: number[] = [1, 2, 3, 4, 5];
+let names: Array<string> = ["Анна", "Петр", "Мария"];
+
+// Смешанный массив с union типом
+let mixed: (string | number)[] = ["hello", 42, "world", 123];
+
+console.log("Числа:", numbers);
+console.log("Имена:", names);
+console.log("Смешанный:", mixed);`,
+                output: `Числа: [1, 2, 3, 4, 5]
+Имена: ["Анна", "Петр", "Мария"]
+Смешанный: ["hello", 42, "world", 123]`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#arrays'
+            },
+            {
+                name: 'Объекты',
+                category: 'beginner',
+                description: 'Типизация объектов и их свойств',
+                code: `// Типизация объекта
+let user: {
+    name: string;
+    age: number;
+    email?: string;  // опциональное свойство
+} = {
+    name: "Анна",
+    age: 25
+    // email не обязательный
+};
+
+// Добавление email
+user.email = "anna@example.com";
+
+console.log("Пользователь:", user);`,
+                output: `Пользователь: {name: "Анна", age: 25, email: "anna@example.com"}`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#object-types'
+            },
+            {
+                name: 'Union типы',
+                category: 'beginner',
+                description: 'Переменная может быть одним из нескольких типов',
+                code: `// Union тип - может быть string ИЛИ number
+let id: string | number;
+
+id = "abc123";  // ✅ валидно
+console.log("ID как строка:", id);
+
+id = 12345;     // ✅ валидно
+console.log("ID как число:", id);
+
+// Type narrowing - проверка типа
+function formatId(id: string | number): string {
+    if (typeof id === "string") {
+        return id.toUpperCase();
+    }
+    return \`ID_\${id}\`;
+}
+
+console.log(formatId("abc"));
+console.log(formatId(123));`,
+                output: `ID как строка: abc123
+ID как число: 12345
+ABC
+ID_123`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#union-types'
+            },
+            {
+                name: 'Literal типы',
+                category: 'beginner',
+                description: 'Точные значения как типы',
+                code: `// Literal типы - только конкретные значения
+type Status = "loading" | "success" | "error";
+type Theme = "light" | "dark";
+
+let currentStatus: Status = "loading";
+let userTheme: Theme = "dark";
+
+function updateStatus(status: Status) {
+    console.log(\`Статус изменен на: \${status}\`);
+}
+
+updateStatus("success");
+updateStatus("error");
+
+// updateStatus("unknown"); // ❌ Error!
+
+console.log("Текущая тема:", userTheme);`,
+                output: `Статус изменен на: success
+Статус изменен на: error
+Текущая тема: dark`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types'
+            },
+            {
+                name: 'Интерфейсы',
+                category: 'intermediate',
+                description: 'Определение структуры объектов через интерфейсы',
+                code: `// Определение интерфейса
+interface User {
+    id: number;
+    name: string;
+    email: string;
+    age?: number;              // опциональное
+    readonly created: Date;    // только чтение
+}
+
+// Использование интерфейса
+const user: User = {
+    id: 1,
+    name: "Анна Петрова",
+    email: "anna@example.com",
+    created: new Date()
+};
+
+// user.created = new Date(); // ❌ Error - readonly
+
+console.log("Пользователь:", user.name);
+console.log("Email:", user.email);`,
+                output: `Пользователь: Анна Петрова
+Email: anna@example.com`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/objects.html'
+            },
+            {
+                name: 'Расширение интерфейсов',
+                category: 'intermediate',
+                description: 'Наследование и расширение интерфейсов',
+                code: `// Базовый интерфейс
+interface Animal {
+    name: string;
+    age: number;
+}
+
+// Расширение интерфейса
+interface Dog extends Animal {
+    breed: string;
+    bark(): string;
+}
+
+interface Cat extends Animal {
+    color: string;
+    meow(): string;
+}
+
+// Реализация
+const myDog: Dog = {
+    name: "Бобик",
+    age: 3,
+    breed: "Лабрадор",
+    bark: () => "Гав-гав!"
+};
+
+const myCat: Cat = {
+    name: "Мурка",
+    age: 2,
+    color: "рыжий",
+    meow: () => "Мяу!"
+};
+
+console.log(\`\${myDog.name} говорит: \${myDog.bark()}\`);
+console.log(\`\${myCat.name} говорит: \${myCat.meow()}\`);`,
+                output: `Бобик говорит: Гав-гав!
+Мурка говорит: Мяу!`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/objects.html#extending-types'
+            },
+            {
+                name: 'Функции',
+                category: 'intermediate',
+                description: 'Типизация функций и их параметров',
+                code: `// Типизация функций
+function greet(name: string): string {
+    return \`Привет, \${name}!\`;
+}
+
+// Стрелочная функция
+const multiply = (a: number, b: number): number => a * b;
+
+// Опциональные параметры
+function createUser(name: string, age?: number): string {
+    const ageText = age ? \`, \${age} лет\` : "";
+    return \`Пользователь: \${name}\${ageText}\`;
+}
+
+// Параметры по умолчанию
+function power(base: number, exponent: number = 2): number {
+    return Math.pow(base, exponent);
+}
+
+console.log(greet("Анна"));
+console.log(multiply(5, 3));
+console.log(createUser("Петр"));
+console.log(createUser("Мария", 25));
+console.log(power(3));
+console.log(power(2, 4));`,
+                output: `Привет, Анна!
+15
+Пользователь: Петр
+Пользователь: Мария, 25 лет
+9
+16`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/functions.html'
+            },
+            {
+                name: 'Generics основы',
+                category: 'intermediate',
+                description: 'Создание переиспользуемого кода с помощью generics',
+                code: `// Generic функция
+function identity<T>(arg: T): T {
+    return arg;
+}
+
+// Использование с разными типами
+const stringResult = identity<string>("Hello");
+const numberResult = identity<number>(42);
+const booleanResult = identity<boolean>(true);
+
+// Type inference - TS сам выведет тип
+const autoString = identity("World");
+const autoNumber = identity(123);
+
+console.log("String:", stringResult);
+console.log("Number:", numberResult);
+console.log("Boolean:", booleanResult);
+console.log("Auto string:", autoString);
+console.log("Auto number:", autoNumber);
+
+// Generic массив
+function getFirst<T>(items: T[]): T | undefined {
+    return items[0];
+}
+
+const firstNumber = getFirst([1, 2, 3]);      // number | undefined
+const firstName = getFirst(["a", "b", "c"]);  // string | undefined
+
+console.log("Первое число:", firstNumber);
+console.log("Первая строка:", firstName);`,
+                output: `String: Hello
+Number: 42
+Boolean: true
+Auto string: World
+Auto number: 123
+Первое число: 1
+Первая строка: a`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/generics.html'
+            },
+            {
+                name: 'Generic интерфейсы',
+                category: 'advanced',
+                description: 'Интерфейсы с параметрами типов',
+                code: `// Generic интерфейс для API ответов
+interface ApiResponse<T> {
+    data: T;
+    success: boolean;
+    message?: string;
+}
+
+interface User {
+    id: number;
+    name: string;
+    email: string;
+}
+
+// Использование generic интерфейса
+const userResponse: ApiResponse<User> = {
+    data: {
+        id: 1,
+        name: "Анна",
+        email: "anna@example.com"
+    },
+    success: true,
+    message: "Данные загружены"
+};
+
+const usersResponse: ApiResponse<User[]> = {
+    data: [
+        { id: 1, name: "Анна", email: "anna@example.com" },
+        { id: 2, name: "Петр", email: "peter@example.com" }
+    ],
+    success: true
+};
+
+console.log("Один пользователь:", userResponse.data.name);
+console.log("Количество пользователей:", usersResponse.data.length);`,
+                output: `Один пользователь: Анна
+Количество пользователей: 2`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-types'
+            },
+            {
+                name: 'Type Guards',
+                category: 'advanced',
+                description: 'Проверка и сужение типов в runtime',
+                code: `// Custom type guard
+interface Fish {
+    swim(): void;
+}
+
+interface Bird {
+    fly(): void;
+}
+
+// Type guard функция
+function isFish(pet: Fish | Bird): pet is Fish {
+    return (pet as Fish).swim !== undefined;
+}
+
+// Создание объектов
+const fish: Fish = {
+    swim: () => console.log("🐠 Плаваю!")
+};
+
+const bird: Bird = {
+    fly: () => console.log("🐦 Летаю!")
+};
+
+// Использование type guard
+function movePet(pet: Fish | Bird) {
+    if (isFish(pet)) {
+        pet.swim(); // TypeScript знает что это Fish
+    } else {
+        pet.fly();  // TypeScript знает что это Bird
+    }
+}
+
+movePet(fish);
+movePet(bird);
+
+// Встроенные type guards
+function processValue(value: string | number) {
+    if (typeof value === "string") {
+        console.log("Строка в верхнем регистре:", value.toUpperCase());
+    } else {
+        console.log("Число в степени 2:", value ** 2);
+    }
+}
+
+processValue("hello");
+processValue(5);`,
+                output: `🐠 Плаваю!
+🐦 Летаю!
+Строка в верхнем регистре: HELLO
+Число в степени 2: 25`,
+                link: 'https://www.typescriptlang.org/docs/handbook/2/narrowing.html'
+            },
+            {
+                name: 'Утилитарные типы',
+                category: 'advanced',
+                description: 'Встроенные утилитарные типы TypeScript',
+                code: `// Базовый интерфейс
+interface User {
+    id: number;
+    name: string;
+    email: string;
+    password: string;
+    age?: number;
+}
+
+// Partial - все свойства опциональные
+type PartialUser = Partial<User>;
+const updateData: PartialUser = {
+    name: "Новое имя"
+};
+
+// Pick - выбрать только нужные свойства
+type PublicUser = Pick<User, "id" | "name" | "email">;
+const publicInfo: PublicUser = {
+    id: 1,
+    name: "Анна",
+    email: "anna@example.com"
+};
+
+// Omit - исключить свойства
+type SafeUser = Omit<User, "password">;
+const safeInfo: SafeUser = {
+    id: 1,
+    name: "Анна",
+    email: "anna@example.com"
+};
+
+// Record - создать объект с ключами и значениями
+type UserRoles = Record<string, string>;
+const roles: UserRoles = {
+    admin: "Администратор",
+    user: "Пользователь",
+    guest: "Гость"
+};
+
+console.log("Обновление:", updateData);
+console.log("Публичная инфо:", publicInfo);
+console.log("Безопасная инфо:", safeInfo.name);
+console.log("Роли:", roles);`,
+                output: `Обновление: {name: "Новое имя"}
+Публичная инфо: {id: 1, name: "Анна", email: "anna@example.com"}
+Безопасная инфо: Анна
+Роли: {admin: "Администратор", user: "Пользователь", guest: "Гость"}`,
+                link: 'https://www.typescriptlang.org/docs/handbook/utility-types.html'
+            }
+        ];
+
+        let filteredConcepts = [...concepts];
+        let currentCategory = 'all';
+
+        function getDifficultyClass(category) {
+            return `difficulty-${category}`;
+        }
+
+        function getDifficultyLabel(category) {
+            const labels = {
+                'beginner': 'Начальный',
+                'intermediate': 'Средний',
+                'advanced': 'Продвинутый'
+            };
+            return labels[category] || category;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderConcepts(conceptsToRender = filteredConcepts) {
+            const grid = document.getElementById('conceptsGrid');
+            
+            if (conceptsToRender.length === 0) {
+                grid.innerHTML = `
+                    <div class="no-results">
+                        <h3>Ничего не найдено</h3>
+                        <p>Попробуйте изменить поисковый запрос или фильтр</p>
+                    </div>
+                `;
+                updateStats(0);
+                return;
+            }
+
+            grid.innerHTML = conceptsToRender.map((concept, index) => `
+                <div class="concept-card" data-concept-name="${concept.name}">
+                    <div class="concept-header">
+                        <span class="concept-name">${concept.name}</span>
+                        <span class="difficulty-badge ${getDifficultyClass(concept.category)}">${getDifficultyLabel(concept.category)}</span>
+                    </div>
+                    
+                    <div class="concept-description">${concept.description}</div>
+                    
+                    <div class="example-container">
+                        <div class="example-controls">
+                            <div class="view-toggle">
+                                <button class="view-btn active" onclick="toggleView(${index}, 'code')">Код</button>
+                                <button class="view-btn" onclick="toggleView(${index}, 'output')">Результат</button>
+                            </div>
+                            <button class="copy-btn" onclick="copyCode(this, ${index})">📋 Копировать</button>
+                            <button class="run-btn" onclick="runCode(${index})">▶️ Запустить</button>
+                        </div>
+                        
+                        <div class="code-example" id="code-${index}">
+                            <pre>${escapeHtml(concept.code)}</pre>
+                        </div>
+                        
+                        <div class="output-example" id="output-${index}">
+                            <pre>${concept.output}</pre>
+                        </div>
+                    </div>
+                    
+                    <div class="try-it-container">
+                        <h4 style="margin-bottom: 10px; color: #3b82f6;">🧪 Попробуйте сами:</h4>
+                        <textarea class="try-it-textarea" id="tryit-${index}" placeholder="Введите ваш TypeScript код здесь...">${concept.code}</textarea>
+                        <button class="run-btn" style="margin-top: 10px;" onclick="runCustomCode(${index})">▶️ Выполнить код</button>
+                    </div>
+                    
+                    <a href="${concept.link}" target="_blank" class="external-link">
+                        📖 Подробнее в документации
+                    </a>
+                </div>
+            `).join('');
+
+            updateStats(conceptsToRender.length);
+        }
+
+        function toggleView(index, view) {
+            const codeEl = document.getElementById(`code-${index}`);
+            const outputEl = document.getElementById(`output-${index}`);
+            const buttons = document.querySelectorAll(`.concept-card:nth-child(${index + 1}) .view-btn`);
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (view === 'code') {
+                codeEl.style.display = 'block';
+                outputEl.style.display = 'none';
+                buttons[0].classList.add('active');
+            } else {
+                codeEl.style.display = 'none';
+                outputEl.style.display = 'block';
+                buttons[1].classList.add('active');
+            }
+        }
+
+        function copyCode(btn, index) {
+            const cleanCode = concepts[index].code;
+            
+            navigator.clipboard.writeText(cleanCode).then(() => {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Скопировано!';
+                btn.style.background = '#10b981';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '#3b82f6';
+                }, 2000);
+            }).catch(() => {
+                alert('Код скопирован в буфер обмена!');
+            });
+        }
+
+        function runCode(index) {
+            const outputEl = document.getElementById(`output-${index}`);
+            outputEl.style.display = 'block';
+            document.getElementById(`code-${index}`).style.display = 'none';
+            
+            // Update view buttons
+            const buttons = document.querySelectorAll(`.concept-card:nth-child(${index + 1}) .view-btn`);
+            buttons.forEach(btn => btn.classList.remove('active'));
+            buttons[1].classList.add('active');
+        }
+
+        function runCustomCode(index) {
+            const customCode = document.getElementById(`tryit-${index}`).value;
+            const outputEl = document.getElementById(`output-${index}`);
+            
+            // Простая симуляция выполнения кода
+            try {
+                // В реальном приложении здесь был бы TypeScript компилятор
+                outputEl.innerHTML = '<pre>// Код выполнен!\n// В реальном приложении здесь был бы результат компиляции TypeScript</pre>';
+                outputEl.style.display = 'block';
+                document.getElementById(`code-${index}`).style.display = 'none';
+                
+                const buttons = document.querySelectorAll(`.concept-card:nth-child(${index + 1}) .view-btn`);
+                buttons.forEach(btn => btn.classList.remove('active'));
+                buttons[1].classList.add('active');
+            } catch (error) {
+                outputEl.innerHTML = `<pre style="color: #ef4444;">Ошибка: ${error.message}</pre>`;
+            }
+        }
+
+        function updateStats(visible) {
+            document.getElementById('totalConcepts').textContent = concepts.length;
+            document.getElementById('visibleConcepts').textContent = visible;
+        }
+
+        function filterConcepts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            filteredConcepts = concepts.filter(concept => {
+                const matchesSearch = concept.name.toLowerCase().includes(searchTerm) || 
+                                    concept.description.toLowerCase().includes(searchTerm);
+                const matchesCategory = currentCategory === 'all' || concept.category === currentCategory;
+                
+                return matchesSearch && matchesCategory;
+            });
+            
+            renderConcepts(filteredConcepts);
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', filterConcepts);
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                currentCategory = e.target.dataset.category;
+                filterConcepts();
+            });
+        });
+
+        // Инициализация
+        renderConcepts();
+    </script>
+</body>
+</html>

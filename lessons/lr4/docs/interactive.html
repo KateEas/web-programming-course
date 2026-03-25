@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Интерактивное руководство: MobX и Zustand</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/mobx@6/dist/mobx.umd.production.min.js"></script>
+  <script src="https://unpkg.com/mobx-react-lite@4/dist/mobxreactlite.umd.production.min.js"></script>
+  <script src="https://unpkg.com/zustand@4/index.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
+      backdrop-filter: blur(10px);
+    }
+
+    .tab:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+    }
+
+    .tab.active {
+      background: white;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .content {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .example {
+      margin-bottom: 30px;
+    }
+
+    .example h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+    }
+
+    .example h3 {
+      color: #764ba2;
+      margin: 20px 0 10px;
+      font-size: 1.2rem;
+    }
+
+    .demo {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .code-block .keyword { color: #ff79c6; }
+    .code-block .function { color: #50fa7b; }
+    .code-block .string { color: #f1fa8c; }
+    .code-block .comment { color: #6272a4; font-style: italic; }
+
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #5568d3;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.danger {
+      background: #e74c3c;
+    }
+
+    button.danger:hover {
+      background: #c0392b;
+    }
+
+    input, textarea {
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 16px;
+      width: 100%;
+      max-width: 300px;
+      transition: border 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .counter {
+      font-size: 48px;
+      font-weight: bold;
+      color: #667eea;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      margin: 8px 0;
+      transition: all 0.2s;
+    }
+
+    .todo-item:hover {
+      border-color: #667eea;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    }
+
+    .todo-item.completed {
+      opacity: 0.6;
+    }
+
+    .todo-item.completed span {
+      text-decoration: line-through;
+    }
+
+    .todo-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .todo-item span {
+      flex: 1;
+      font-size: 16px;
+    }
+
+    .todo-item button {
+      margin: 0;
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+
+    .stats {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .form-group {
+      margin: 15px 0;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .comparison-item {
+      padding: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+    }
+
+    .comparison-item h4 {
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 768px) {
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .tabs {
+        justify-content: center;
+      }
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+
+    .info-box strong {
+      color: #1976d2;
+    }
+
+    .performance-meter {
+      height: 30px;
+      background: #e0e0e0;
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .performance-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #4caf50, #8bc34a);
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Интерактивное руководство: MobX и Zustand</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('mobx-basics')">MobX: Основы</button>
+      <button class="tab" onclick="showTab('mobx-computed')">MobX: Computed</button>
+      <button class="tab" onclick="showTab('mobx-async')">MobX: Async</button>
+      <button class="tab" onclick="showTab('zustand-basics')">Zustand: Основы</button>
+      <button class="tab" onclick="showTab('zustand-middleware')">Zustand: Middleware</button>
+      <button class="tab" onclick="showTab('comparison')">Сравнение</button>
+    </div>
+
+    <div class="content">
+      <!-- MobX Basics -->
+      <div id="mobx-basics" class="tab-content">
+        <div class="example">
+          <h2>MobX: Основы реактивности</h2>
+          <p>MobX автоматически отслеживает изменения и обновляет компоненты</p>
+
+          <h3>📝 Код</h3>
+          <div class="code-block">
+<span class="keyword">class</span> <span class="function">CounterStore</span> {
+  count = <span class="string">0</span>;
+
+  <span class="keyword">constructor</span>() {
+    mobx.<span class="function">makeAutoObservable</span>(<span class="keyword">this</span>);
+  }
+
+  <span class="function">increment</span>() {
+    <span class="keyword">this</span>.count++;
+  }
+
+  <span class="function">decrement</span>() {
+    <span class="keyword">this</span>.count--;
+  }
+
+  <span class="function">reset</span>() {
+    <span class="keyword">this</span>.count = <span class="string">0</span>;
+  }
+}
+
+<span class="keyword">const</span> Counter = mobxReactLite.<span class="function">observer</span>(() => {
+  <span class="keyword">return</span> (
+    &lt;div&gt;
+      &lt;div className=<span class="string">"counter"</span>&gt;{counterStore.count}&lt;/div&gt;
+      &lt;button onClick={() => counterStore.<span class="function">increment</span>()}&gt;+1&lt;/button&gt;
+      &lt;button onClick={() => counterStore.<span class="function">decrement</span>()}&gt;-1&lt;/button&gt;
+    &lt;/div&gt;
+  );
+});
+          </div>
+
+          <h3>🎮 Демо</h3>
+          <div class="demo">
+            <div id="mobx-counter-demo"></div>
+          </div>
+
+          <div class="info-box">
+            <strong>Ключевая особенность:</strong> Компонент обернут в <code>observer()</code> и автоматически обновляется при изменении <code>count</code>. Никаких setState или dispatch не нужно!
+          </div>
+        </div>
+      </div>
+
+      <!-- MobX Computed -->
+      <div id="mobx-computed" class="tab-content" style="display:none;">
+        <div class="example">
+          <h2>MobX: Computed Values (Вычисляемые значения)</h2>
+          <p>Computed values автоматически пересчитываются при изменении зависимостей</p>
+
+          <h3>📝 Код</h3>
+          <div class="code-block">
+<span class="keyword">class</span> <span class="function">TodoStore</span> {
+  todos = [];
+
+  <span class="keyword">constructor</span>() {
+    mobx.<span class="function">makeAutoObservable</span>(<span class="keyword">this</span>);
+  }
+
+  <span class="keyword">get</span> <span class="function">completedCount</span>() {
+    <span class="keyword">return this</span>.todos.<span class="function">filter</span>(t => t.done).<span class="function">length</span>;
+  }
+
+  <span class="keyword">get</span> <span class="function">activeCount</span>() {
+    <span class="keyword">return this</span>.todos.<span class="function">filter</span>(t => !t.done).<span class="function">length</span>;
+  }
+
+  <span class="keyword">get</span> <span class="function">progress</span>() {
+    <span class="keyword">if</span> (<span class="keyword">this</span>.todos.length === <span class="string">0</span>) <span class="keyword">return</span> <span class="string">0</span>;
+    <span class="keyword">return</span> (<span class="keyword">this</span>.completedCount / <span class="keyword">this</span>.todos.length) * <span class="string">100</span>;
+  }
+
+  <span class="function">addTodo</span>(text) {
+    <span class="keyword">this</span>.todos.<span class="function">push</span>({ id: Date.<span class="function">now</span>(), text, done: <span class="keyword">false</span> });
+  }
+
+  <span class="function">toggleTodo</span>(id) {
+    <span class="keyword">const</span> todo = <span class="keyword">this</span>.todos.<span class="function">find</span>(t => t.id === id);
+    <span class="keyword">if</span> (todo) todo.done = !todo.done;
+  }
+}
+          </div>
+
+          <h3>🎮 Демо</h3>
+          <div class="demo">
+            <div id="mobx-todo-demo"></div>
+          </div>
+
+          <div class="info-box">
+            <strong>Computed values:</strong> Геттеры <code>completedCount</code>, <code>activeCount</code> и <code>progress</code> автоматически пересчитываются при изменении массива <code>todos</code>. Результат кэшируется!
+          </div>
+        </div>
+      </div>
+
+      <!-- MobX Async -->
+      <div id="mobx-async" class="tab-content" style="display:none;">
+        <div class="example">
+          <h2>MobX: Асинхронные действия</h2>
+          <p>Для обновления состояния после async/await используйте runInAction</p>
+
+          <h3>📝 Код</h3>
+          <div class="code-block">
+<span class="keyword">class</span> <span class="function">UserStore</span> {
+  users = [];
+  loading = <span class="keyword">false</span>;
+  error = <span class="keyword">null</span>;
+
+  <span class="keyword">constructor</span>() {
+    mobx.<span class="function">makeAutoObservable</span>(<span class="keyword">this</span>);
+  }
+
+  <span class="keyword">async</span> <span class="function">fetchUsers</span>() {
+    <span class="keyword">this</span>.loading = <span class="keyword">true</span>;
+    <span class="keyword">this</span>.error = <span class="keyword">null</span>;
+
+    <span class="keyword">try</span> {
+      <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="function">fetch</span>(<span class="string">'https://jsonplaceholder.typicode.com/users'</span>);
+      <span class="keyword">const</span> data = <span class="keyword">await</span> response.<span class="function">json</span>();
+
+      mobx.<span class="function">runInAction</span>(() => {
+        <span class="keyword">this</span>.users = data.<span class="function">slice</span>(<span class="string">0</span>, <span class="string">5</span>);
+        <span class="keyword">this</span>.loading = <span class="keyword">false</span>;
+      });
+    } <span class="keyword">catch</span> (err) {
+      mobx.<span class="function">runInAction</span>(() => {
+        <span class="keyword">this</span>.error = err.message;
+        <span class="keyword">this</span>.loading = <span class="keyword">false</span>;
+      });
+    }
+  }
+}
+          </div>
+
+          <h3>🎮 Демо</h3>
+          <div class="demo">
+            <div id="mobx-async-demo"></div>
+          </div>
+
+          <div class="info-box">
+            <strong>runInAction:</strong> Код после <code>await</code> выполняется вне action. Оберните обновления состояния в <code>runInAction()</code> для правильной работы MobX.
+          </div>
+        </div>
+      </div>
+
+      <!-- Zustand Basics -->
+      <div id="zustand-basics" class="tab-content" style="display:none;">
+        <div class="example">
+          <h2>Zustand: Минималистичный подход</h2>
+          <p>Zustand — простая и легковесная библиотека (~1KB)</p>
+
+          <h3>📝 Код</h3>
+          <div class="code-block">
+<span class="keyword">const</span> useBearStore = zustand.<span class="function">create</span>((set) => ({
+  bears: <span class="string">0</span>,
+  <span class="function">increase</span>: () => <span class="function">set</span>((state) => ({ bears: state.bears + <span class="string">1</span> })),
+  <span class="function">decrease</span>: () => <span class="function">set</span>((state) => ({ bears: state.bears - <span class="string">1</span> })),
+  <span class="function">reset</span>: () => <span class="function">set</span>({ bears: <span class="string">0</span> }),
+}));
+
+<span class="keyword">function</span> <span class="function">BearCounter</span>() {
+  <span class="keyword">const</span> bears = <span class="function">useBearStore</span>((state) => state.bears);
+  <span class="keyword">const</span> increase = <span class="function">useBearStore</span>((state) => state.increase);
+
+  <span class="keyword">return</span> (
+    &lt;div&gt;
+      &lt;div className=<span class="string">"counter"</span>&gt;{bears} 🐻&lt;/div&gt;
+      &lt;button onClick={increase}&gt;Добавить медведя&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+          </div>
+
+          <h3>🎮 Демо</h3>
+          <div class="demo">
+            <div id="zustand-counter-demo"></div>
+          </div>
+
+          <div class="info-box">
+            <strong>Селекторы:</strong> Компонент подписывается только на используемые части state через селекторы <code>(state) => state.bears</code>. Это оптимизирует ре-рендеры!
+          </div>
+        </div>
+      </div>
+
+      <!-- Zustand Middleware -->
+      <div id="zustand-middleware" class="tab-content" style="display:none;">
+        <div class="example">
+          <h2>Zustand: Middleware (persist + devtools)</h2>
+          <p>Zustand поддерживает middleware для расширения функциональности</p>
+
+          <h3>📝 Концепция</h3>
+          <div class="code-block">
+<span class="comment">// С persist middleware состояние автоматически сохраняется в localStorage</span>
+<span class="keyword">const</span> useStore = zustand.<span class="function">create</span>(
+  zustand.middleware.<span class="function">persist</span>(
+    (set) => ({
+      theme: <span class="string">'light'</span>,
+      <span class="function">setTheme</span>: (theme) => <span class="function">set</span>({ theme }),
+    }),
+    { name: <span class="string">'app-settings'</span> }
+  )
+);
+
+<span class="comment">// Пример: счетчик с сохранением в localStorage</span>
+<span class="keyword">const</span> usePersistentCounter = zustand.<span class="function">create</span>(
+  (set) => ({
+    count: <span class="string">0</span>,
+    <span class="function">increment</span>: () => <span class="function">set</span>((state) => ({ count: state.count + <span class="string">1</span> })),
+    <span class="function">decrement</span>: () => <span class="function">set</span>((state) => ({ count: state.count - <span class="string">1</span> })),
+  })
+);
+          </div>
+
+          <h3>🎮 Демо (симуляция)</h3>
+          <div class="demo">
+            <div id="zustand-middleware-demo"></div>
+          </div>
+
+          <div class="info-box">
+            <strong>Middleware:</strong> Zustand поддерживает persist (localStorage), immer (мутации), devtools (Redux DevTools) и другие плагины для расширения возможностей.
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison -->
+      <div id="comparison" class="tab-content" style="display:none;">
+        <div class="example">
+          <h2>Сравнение MobX и Zustand</h2>
+
+          <div class="comparison">
+            <div class="comparison-item">
+              <h4>MobX</h4>
+              <ul>
+                <li>✅ Реактивное программирование</li>
+                <li>✅ Автоматические обновления</li>
+                <li>✅ Computed values из коробки</li>
+                <li>✅ ООП-стиль (классы)</li>
+                <li>✅ Отлично для сложной логики</li>
+                <li>⚠️ Размер: ~16 KB</li>
+                <li>⚠️ Больше концепций для изучения</li>
+              </ul>
+            </div>
+
+            <div class="comparison-item">
+              <h4>Zustand</h4>
+              <ul>
+                <li>✅ Минимализм и простота</li>
+                <li>✅ Функциональный стиль (хуки)</li>
+                <li>✅ Размер: ~1 KB</li>
+                <li>✅ Легко учиться</li>
+                <li>✅ TypeScript-first</li>
+                <li>⚠️ Computed вручную (селекторы)</li>
+                <li>⚠️ Нужно помнить про immutability</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Когда использовать?</h3>
+
+          <div class="info-box">
+            <strong>MobX:</strong> Сложные приложения с бизнес-логикой, множество вычисляемых значений, команда предпочитает ООП
+          </div>
+
+          <div class="info-box">
+            <strong>Zustand:</strong> Простые приложения, UI-состояние, функциональный стиль, важен размер бандла
+          </div>
+
+          <div class="info-box">
+            <strong>Комбинация:</strong> MobX для бизнес-логики + Zustand для UI-состояния
+          </div>
+
+          <h3>🎮 Демо: Производительность</h3>
+          <div class="demo">
+            <div id="comparison-demo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/babel">
+    const { makeAutoObservable, runInAction } = mobx;
+    const { observer } = mobxReactLite;
+    const { useState, useEffect } = React;
+
+    // ========== MobX Counter ==========
+    class CounterStore {
+      count = 0;
+
+      constructor() {
+        makeAutoObservable(this);
+      }
+
+      increment() {
+        this.count++;
+      }
+
+      decrement() {
+        this.count--;
+      }
+
+      reset() {
+        this.count = 0;
+      }
+    }
+
+    const counterStore = new CounterStore();
+
+    const MobXCounter = observer(() => {
+      return (
+        <div>
+          <div className="counter">{counterStore.count}</div>
+          <button onClick={() => counterStore.increment()}>+1</button>
+          <button onClick={() => counterStore.decrement()}>-1</button>
+          <button onClick={() => counterStore.reset()}>Сброс</button>
+        </div>
+      );
+    });
+
+    // ========== MobX Todo ==========
+    class TodoStore {
+      todos = [];
+
+      constructor() {
+        makeAutoObservable(this);
+      }
+
+      get completedCount() {
+        return this.todos.filter(t => t.done).length;
+      }
+
+      get activeCount() {
+        return this.todos.filter(t => !t.done).length;
+      }
+
+      get progress() {
+        if (this.todos.length === 0) return 0;
+        return Math.round((this.completedCount / this.todos.length) * 100);
+      }
+
+      addTodo(text) {
+        if (text.trim()) {
+          this.todos.push({ id: Date.now(), text, done: false });
+        }
+      }
+
+      toggleTodo(id) {
+        const todo = this.todos.find(t => t.id === id);
+        if (todo) todo.done = !todo.done;
+      }
+
+      removeTodo(id) {
+        this.todos = this.todos.filter(t => t.id !== id);
+      }
+    }
+
+    const todoStore = new TodoStore();
+
+    const MobXTodo = observer(() => {
+      const [text, setText] = useState('');
+
+      return (
+        <div>
+          <div style={{ marginBottom: '15px' }}>
+            <input
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  todoStore.addTodo(text);
+                  setText('');
+                }
+              }}
+              placeholder="Введите задачу..."
+            />
+            <button onClick={() => {
+              todoStore.addTodo(text);
+              setText('');
+            }}>Добавить</button>
+          </div>
+
+          {todoStore.todos.map(todo => (
+            <div key={todo.id} className={`todo-item ${todo.done ? 'completed' : ''}`}>
+              <input
+                type="checkbox"
+                checked={todo.done}
+                onChange={() => todoStore.toggleTodo(todo.id)}
+              />
+              <span>{todo.text}</span>
+              <button className="danger" onClick={() => todoStore.removeTodo(todo.id)}>
+                Удалить
+              </button>
+            </div>
+          ))}
+
+          <div className="stats">
+            <h4 style={{ marginBottom: '15px' }}>📊 Статистика (Computed Values)</h4>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <span className="stat-value">{todoStore.todos.length}</span>
+                <span className="stat-label">Всего задач</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">{todoStore.activeCount}</span>
+                <span className="stat-label">Активных</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">{todoStore.completedCount}</span>
+                <span className="stat-label">Выполнено</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">{todoStore.progress}%</span>
+                <span className="stat-label">Прогресс</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    });
+
+    // ========== MobX Async ==========
+    class UserStore {
+      users = [];
+      loading = false;
+      error = null;
+
+      constructor() {
+        makeAutoObservable(this);
+      }
+
+      async fetchUsers() {
+        this.loading = true;
+        this.error = null;
+
+        try {
+          const response = await fetch('https://jsonplaceholder.typicode.com/users');
+          const data = await response.json();
+
+          runInAction(() => {
+            this.users = data.slice(0, 5);
+            this.loading = false;
+          });
+        } catch (err) {
+          runInAction(() => {
+            this.error = err.message;
+            this.loading = false;
+          });
+        }
+      }
+    }
+
+    const userStore = new UserStore();
+
+    const MobXAsync = observer(() => {
+      useEffect(() => {
+        if (userStore.users.length === 0) {
+          userStore.fetchUsers();
+        }
+      }, []);
+
+      if (userStore.loading) {
+        return <div style={{ textAlign: 'center', padding: '20px' }}>⏳ Загрузка...</div>;
+      }
+
+      if (userStore.error) {
+        return <div style={{ color: 'red' }}>❌ Ошибка: {userStore.error}</div>;
+      }
+
+      return (
+        <div>
+          <button onClick={() => userStore.fetchUsers()}>🔄 Обновить</button>
+          <div style={{ marginTop: '15px' }}>
+            {userStore.users.map(user => (
+              <div key={user.id} className="todo-item">
+                <span><strong>{user.name}</strong> ({user.email})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    });
+
+    // ========== Zustand Counter ==========
+    // Note: Zustand UMD requires manual setup
+    const useBearStore = window.zustand((set) => ({
+      bears: 0,
+      increase: () => set((state) => ({ bears: state.bears + 1 })),
+      decrease: () => set((state) => ({ bears: state.bears - 1 })),
+      reset: () => set({ bears: 0 }),
+    }));
+
+    function ZustandCounter() {
+      const bears = useBearStore((state) => state.bears);
+      const increase = useBearStore((state) => state.increase);
+      const decrease = useBearStore((state) => state.decrease);
+      const reset = useBearStore((state) => state.reset);
+
+      return (
+        <div>
+          <div className="counter">{bears} 🐻</div>
+          <button onClick={increase}>Добавить медведя</button>
+          <button onClick={decrease}>Убрать медведя</button>
+          <button onClick={reset}>Сброс</button>
+        </div>
+      );
+    }
+
+    // ========== Zustand Middleware Demo ==========
+    const usePersistentCounter = window.zustand((set) => ({
+      count: parseInt(localStorage.getItem('demo-count') || '0'),
+      increment: () => set((state) => {
+        const newCount = state.count + 1;
+        localStorage.setItem('demo-count', newCount.toString());
+        return { count: newCount };
+      }),
+      decrement: () => set((state) => {
+        const newCount = state.count - 1;
+        localStorage.setItem('demo-count', newCount.toString());
+        return { count: newCount };
+      }),
+    }));
+
+    function ZustandMiddleware() {
+      const count = usePersistentCounter((state) => state.count);
+      const increment = usePersistentCounter((state) => state.increment);
+      const decrement = usePersistentCounter((state) => state.decrement);
+
+      return (
+        <div>
+          <div className="counter">{count}</div>
+          <button onClick={increment}>+1</button>
+          <button onClick={decrement}>-1</button>
+          <div className="info-box" style={{ marginTop: '15px' }}>
+            💾 Значение автоматически сохраняется в localStorage. Обновите страницу - счетчик сохранится!
+          </div>
+        </div>
+      );
+    }
+
+    // ========== Comparison Demo ==========
+    function ComparisonDemo() {
+      const [renderCount, setRenderCount] = useState(0);
+      const [updateCount, setUpdateCount] = useState(0);
+
+      useEffect(() => {
+        setRenderCount(prev => prev + 1);
+      });
+
+      return (
+        <div>
+          <div className="stats-grid">
+            <div className="stat-item">
+              <span className="stat-value">{renderCount}</span>
+              <span className="stat-label">Рендеров компонента</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{updateCount}</span>
+              <span className="stat-label">Обновлений состояния</span>
+            </div>
+          </div>
+
+          <button onClick={() => setUpdateCount(prev => prev + 1)} style={{ marginTop: '15px' }}>
+            Обновить состояние
+          </button>
+
+          <div className="info-box" style={{ marginTop: '15px' }}>
+            <strong>MobX:</strong> Автоматически оптимизирует обновления - компонент обновляется только при изменении используемых observable-полей
+          </div>
+
+          <div className="info-box">
+            <strong>Zustand:</strong> Используйте селекторы для подписки на конкретные части state и избегайте лишних ре-рендеров
+          </div>
+        </div>
+      );
+    }
+
+    // ========== Render ==========
+    ReactDOM.render(<MobXCounter />, document.getElementById('mobx-counter-demo'));
+    ReactDOM.render(<MobXTodo />, document.getElementById('mobx-todo-demo'));
+    ReactDOM.render(<MobXAsync />, document.getElementById('mobx-async-demo'));
+    ReactDOM.render(<ZustandCounter />, document.getElementById('zustand-counter-demo'));
+    ReactDOM.render(<ZustandMiddleware />, document.getElementById('zustand-middleware-demo'));
+    ReactDOM.render(<ComparisonDemo />, document.getElementById('comparison-demo'));
+  </script>
+
+  <script>
+    function showTab(tabId) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+      });
+
+      // Remove active class from all buttons
+      document.querySelectorAll('.tab').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Show selected tab
+      document.getElementById(tabId).style.display = 'block';
+
+      // Add active class to clicked button
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "quiz-mock-server",
+  "version": "1.0.0",
+  "description": "Mock API server for Quiz application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["quiz", "mock", "api", "json-server"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "json-server": "^0.17.4",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

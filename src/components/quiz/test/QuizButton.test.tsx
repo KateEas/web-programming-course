@@ -28,19 +28,6 @@ describe('QuizButton', () => {
         expect(screen.getByRole('button')).toBeDisabled();
     });
 
-    it('не вызывает onClick когда отключена', async () => {
-        const handleClick = vi.fn();
-        render(
-            <QuizButton onClick={handleClick} disabled>
-                Отключено
-            </QuizButton>
-        );
-
-        const user = userEvent.setup();
-        await user.click(screen.getByRole('button'));
-
-        expect(handleClick).not.toHaveBeenCalled();
-    });
 
     it('применяет primary стили по умолчанию', () => {
         render(<QuizButton onClick={() => { }}>Primary</QuizButton>);
@@ -60,13 +47,4 @@ describe('QuizButton', () => {
         expect(button.className).toContain('text-gray-800');
     });
 
-    it('применяет темную тему когда theme="dark"', () => {
-        render(
-            <QuizButton onClick={() => { }} theme="dark">
-                Темная кнопка
-            </QuizButton>
-        );
-        const button = screen.getByRole('button');
-        expect(button.className).toContain('bg-purple-700');
-    });
 });

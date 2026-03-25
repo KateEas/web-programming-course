@@ -1,0 +1,1858 @@
+openapi: 3.0.0
+info:
+  title: Quiz Battle API
+  description: |
+    API для квиз-приложения с двумя режимами работы:
+    - **Game Mode**: тренировочный режим с выбором тем и просмотром вопросов
+    - **Battle Mode**: экзаменационный режим со случайными вопросами
+
+    Поддерживаемые типы вопросов:
+    - **multiple-select**: вопросы с множественным выбором (автопроверка, баллы + штрафы)
+    - **essay**: развернутые текстовые ответы (ручная проверка преподавателем)
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.quiz.example.com
+    description: Production server
+
+tags:
+  - name: Auth
+    description: Аутентификация через GitHub OAuth
+  - name: Mode
+    description: Управление режимом работы (Game/Battle)
+  - name: Categories
+    description: Темы/категории вопросов
+  - name: Questions
+    description: Вопросы для студентов
+  - name: Admin Questions
+    description: Управление вопросами (только для админов)
+  - name: Sessions
+    description: Игровые сессии тестирования
+  - name: Admin Users
+    description: Управление пользователями (только для админов)
+
+paths:
+  # ============ AUTH ============
+  /api/auth/github:
+    get:
+      tags:
+        - Auth
+      summary: Инициировать OAuth авторизацию через GitHub
+      description: Перенаправляет на GitHub для авторизации
+      responses:
+        '302':
+          description: Редирект на GitHub OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+                example: https://github.com/login/oauth/authorize?client_id=...
+
+  /api/auth/github/callback:
+    post:
+      tags:
+        - Auth
+      summary: Callback после авторизации GitHub (основной метод)
+      description: Обрабатывает OAuth callback от GitHub, обменивает code на access_token и создает сессию пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: Authorization code от GitHub
+                  example: "abc123def456"
+      responses:
+        '200':
+          description: Успешная авторизация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          description: Ошибка при обмене кода или получении данных от GitHub
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "ServerError"
+                message: "Failed to authenticate with GitHub"
+
+    get:
+      tags:
+        - Auth
+      summary: Callback после авторизации GitHub (legacy)
+      description: Устаревший метод для обратной совместимости. Возвращает mock-данные первого студента.
+      deprecated: true
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Authorization code от GitHub (игнорируется в mock-версии)
+      responses:
+        '200':
+          description: Успешная авторизация (mock)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Получить информацию о текущем пользователе
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/profile:
+    put:
+      tags:
+        - Auth
+      summary: Обновить профиль пользователя
+      description: Обновление профиля (имя, фамилия) после авторизации через GitHub
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+              properties:
+                firstName:
+                  type: string
+                  minLength: 1
+                  example: "Иван"
+                lastName:
+                  type: string
+                  minLength: 1
+                  example: "Иванов"
+      responses:
+        '200':
+          description: Профиль обновлен
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - githubId
+                  - githubUsername
+                  - avatarUrl
+                  - firstName
+                  - lastName
+                  - role
+                properties:
+                  id:
+                    type: string
+                  githubId:
+                    type: integer
+                  githubUsername:
+                    type: string
+                  avatarUrl:
+                    type: string
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  role:
+                    $ref: '#/components/schemas/UserRole'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "ValidationError"
+                message: "firstName is required"
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Выход из системы
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успешный выход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully logged out"
+
+  # ============ MODE ============
+  /api/mode:
+    get:
+      tags:
+        - Mode
+      summary: Получить текущий режим работы системы
+      description: Возвращает текущий режим (Game или Battle) и его настройки
+      responses:
+        '200':
+          description: Информация о режиме
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModeInfo'
+
+    put:
+      tags:
+        - Mode
+      summary: Изменить режим работы системы
+      description: Переключить между Game и Battle режимами (только для админов)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateModeRequest'
+      responses:
+        '200':
+          description: Режим успешно изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModeInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ============ CATEGORIES ============
+  /api/categories:
+    get:
+      tags:
+        - Categories
+      summary: Получить список тем/категорий
+      description: Возвращает все доступные темы для вопросов
+      responses:
+        '200':
+          description: Список категорий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+
+    post:
+      tags:
+        - Categories
+      summary: Создать новую тему/категорию
+      description: Только для админов
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Категория создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/categories/{categoryId}:
+    put:
+      tags:
+        - Categories
+      summary: Обновить категорию
+      description: Только для админов
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+      responses:
+        '200':
+          description: Категория обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Categories
+      summary: Удалить категорию
+      description: Только для админов
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      responses:
+        '204':
+          description: Категория удалена
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============ QUESTIONS (Student) ============
+  /api/questions:
+    get:
+      tags:
+        - Questions
+      summary: Получить список вопросов (без правильных ответов)
+      description: |
+        В Game Mode: возвращает вопросы для просмотра
+        В Battle Mode: возвращает 403 Forbidden
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: categoryId
+          in: query
+          description: Фильтр по категории
+          schema:
+            type: string
+        - name: difficulty
+          in: query
+          description: Фильтр по сложности
+          schema:
+            $ref: '#/components/schemas/Difficulty'
+        - name: type
+          in: query
+          description: Фильтр по типу вопроса
+          schema:
+            $ref: '#/components/schemas/QuestionType'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список вопросов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestionPreview'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Вопросы скрыты в Battle Mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Forbidden"
+                message: "Questions are hidden in Battle Mode. Create a session to start."
+
+  # ============ ADMIN QUESTIONS ============
+  /api/admin/questions:
+    get:
+      tags:
+        - Admin Questions
+      summary: Получить все вопросы с правильными ответами
+      description: Только для админов
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+        - name: difficulty
+          in: query
+          schema:
+            $ref: '#/components/schemas/Difficulty'
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/QuestionType'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Список вопросов с правильными ответами
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestionFull'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Admin Questions
+      summary: Создать новый вопрос
+      description: Только для админов
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+      responses:
+        '201':
+          description: Вопрос создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionFull'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/admin/questions/{questionId}:
+    get:
+      tags:
+        - Admin Questions
+      summary: Получить вопрос по ID с правильными ответами
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QuestionId'
+      responses:
+        '200':
+          description: Полная информация о вопросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionFull'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Admin Questions
+      summary: Обновить вопрос
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QuestionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuestionRequest'
+      responses:
+        '200':
+          description: Вопрос обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionFull'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Admin Questions
+      summary: Удалить вопрос
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QuestionId'
+      responses:
+        '204':
+          description: Вопрос удален
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============ SESSIONS ============
+  /api/sessions:
+    post:
+      tags:
+        - Sessions
+      summary: Создать новую игровую сессию
+      description: |
+        В Game Mode: можно выбрать категории и сложность
+        В Battle Mode: параметры задаются системой или админом для конкретного пользователя
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/sessions/{sessionId}:
+    get:
+      tags:
+        - Sessions
+      summary: Получить информацию о сессии
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Информация о сессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/sessions/{sessionId}/answers:
+    post:
+      tags:
+        - Sessions
+      summary: Отправить ответ на вопрос
+      description: |
+        Сохраняет ответ после каждого вопроса.
+        Для multiple-select: автоматически проверяет и возвращает результат.
+        Для essay: сохраняет для ручной проверки.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitAnswerRequest'
+      responses:
+        '200':
+          description: Ответ принят и проверен (для multiple-select)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerResult'
+        '202':
+          description: Ответ принят, ожидает ручной проверки (для essay)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerPending'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/sessions/{sessionId}/submit:
+    post:
+      tags:
+        - Sessions
+      summary: Завершить сессию
+      description: Помечает сессию как завершенную
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Сессия завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResults'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/sessions/{sessionId}/results:
+    get:
+      tags:
+        - Sessions
+      summary: Получить результаты сессии
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Результаты сессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResults'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============ ADMIN USERS ============
+  /api/admin/users:
+    get:
+      tags:
+        - Admin Users
+      summary: Получить список пользователей
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserWithStats'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/admin/users/{userId}/difficulty:
+    put:
+      tags:
+        - Admin Users
+      summary: Настроить сложность для конкретного пользователя
+      description: Админ может задать индивидуальную сложность для студента в Battle Mode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - difficulty
+              properties:
+                difficulty:
+                  $ref: '#/components/schemas/Difficulty'
+                questionCount:
+                  type: integer
+                  description: Количество вопросов для этого студента
+                  minimum: 1
+                  maximum: 100
+                categoryIds:
+                  type: array
+                  items:
+                    type: string
+                  description: Ограничить конкретными темами (опционально)
+      responses:
+        '200':
+          description: Настройки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDifficultySettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/admin/users/{userId}/results:
+    get:
+      tags:
+        - Admin Users
+      summary: Получить все результаты пользователя
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Результаты пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SessionResults'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/admin/answers/{answerId}/grade:
+    post:
+      tags:
+        - Admin Users
+      summary: Оценить essay-ответ
+      description: Ручная проверка развернутого ответа преподавателем
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: answerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeEssayRequest'
+      responses:
+        '200':
+          description: Ответ оценен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CategoryId:
+      name: categoryId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: ID категории
+
+    QuestionId:
+      name: questionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: ID вопроса
+
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: ID сессии
+
+  schemas:
+    # ============ ENUMS ============
+    QuestionType:
+      type: string
+      enum:
+        - multiple-select
+        - essay
+      description: |
+        Типы вопросов:
+        - multiple-select: множественный выбор с баллами и штрафами
+        - essay: развернутый текстовый ответ (ручная проверка)
+
+    Difficulty:
+      type: string
+      enum:
+        - easy
+        - medium
+        - hard
+      description: Уровень сложности
+
+    AppMode:
+      type: string
+      enum:
+        - game
+        - battle
+      description: |
+        Режимы работы приложения:
+        - game: тренировочный режим
+        - battle: экзаменационный режим
+
+    SessionStatus:
+      type: string
+      enum:
+        - active
+        - completed
+        - expired
+      description: Статус сессии
+
+    AnswerStatus:
+      type: string
+      enum:
+        - correct
+        - incorrect
+        - partial
+        - pending
+      description: |
+        Статус ответа:
+        - correct: полностью правильный
+        - incorrect: неправильный
+        - partial: частично правильный (для multiple-select)
+        - pending: ожидает проверки (для essay)
+
+    UserRole:
+      type: string
+      enum:
+        - student
+        - admin
+      description: Роль пользователя
+
+    # ============ AUTH ============
+    AuthResponse:
+      type: object
+      required:
+        - token
+        - user
+      properties:
+        token:
+          type: string
+          description: JWT токен
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          type: object
+          required:
+            - id
+            - githubId
+            - githubUsername
+            - avatarUrl
+            - role
+          properties:
+            id:
+              type: string
+              example: "usr_123"
+            githubId:
+              type: integer
+              description: GitHub user ID
+              example: 12345678
+            githubUsername:
+              type: string
+              description: GitHub username
+              example: "johndoe"
+            avatarUrl:
+              type: string
+              format: uri
+              description: URL аватара с GitHub
+              example: "https://avatars.githubusercontent.com/u/12345678"
+            firstName:
+              type: string
+              example: "John"
+            lastName:
+              type: string
+              example: "Doe"
+            role:
+              $ref: '#/components/schemas/UserRole'
+
+    User:
+      type: object
+      required:
+        - id
+        - githubId
+        - githubUsername
+        - avatarUrl
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+          example: "usr_123"
+        githubId:
+          type: integer
+          description: GitHub user ID
+          example: 12345678
+        githubUsername:
+          type: string
+          description: GitHub username
+          example: "johndoe"
+        avatarUrl:
+          type: string
+          format: uri
+          description: URL аватара с GitHub
+          example: "https://avatars.githubusercontent.com/u/12345678"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "john@example.com"
+        role:
+          $ref: '#/components/schemas/UserRole'
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:00:00Z"
+
+    # ============ MODE ============
+    ModeInfo:
+      type: object
+      required:
+        - mode
+      properties:
+        mode:
+          $ref: '#/components/schemas/AppMode'
+        battleConfig:
+          type: object
+          description: Конфигурация Battle Mode (если активен)
+          properties:
+            questionCount:
+              type: integer
+              example: 20
+            timeLimit:
+              type: integer
+              description: Ограничение времени в минутах
+              example: 90
+            allowedAttempts:
+              type: integer
+              description: Количество разрешенных попыток
+              example: 1
+            randomOrder:
+              type: boolean
+              description: Случайный порядок вопросов
+              example: true
+            showResultsImmediately:
+              type: boolean
+              description: Показывать результаты сразу после завершения
+              example: false
+
+    UpdateModeRequest:
+      type: object
+      required:
+        - mode
+      properties:
+        mode:
+          $ref: '#/components/schemas/AppMode'
+        battleConfig:
+          type: object
+          description: Настройки для Battle Mode
+          properties:
+            questionCount:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 20
+            timeLimit:
+              type: integer
+              minimum: 1
+              maximum: 300
+              default: 90
+            allowedAttempts:
+              type: integer
+              minimum: 1
+              default: 1
+            randomOrder:
+              type: boolean
+              default: true
+            showResultsImmediately:
+              type: boolean
+              default: false
+
+    # ============ CATEGORIES ============
+    Category:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+      properties:
+        id:
+          type: string
+          example: "cat_123"
+        name:
+          type: string
+          example: "React Hooks"
+        slug:
+          type: string
+          example: "react-hooks"
+        description:
+          type: string
+          example: "Вопросы по хукам в React"
+        questionCount:
+          type: integer
+          description: Количество вопросов в категории
+          example: 15
+
+    CreateCategoryRequest:
+      type: object
+      required:
+        - name
+        - slug
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+
+    UpdateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+
+    # ============ QUESTIONS ============
+    QuestionOption:
+      type: object
+      required:
+        - text
+        - points
+        - isCorrect
+      properties:
+        text:
+          type: string
+          description: Текст варианта ответа
+          example: "useEffect"
+        points:
+          type: integer
+          description: Баллы за этот вариант (если выбран правильно)
+          example: 2
+        isCorrect:
+          type: boolean
+          description: Является ли этот вариант правильным
+          example: true
+
+    EssayRubricItem:
+      type: object
+      required:
+        - criterion
+        - maxPoints
+      properties:
+        criterion:
+          type: string
+          description: Критерий оценивания
+          example: "Понимание концепции"
+        maxPoints:
+          type: integer
+          minimum: 1
+          description: Максимальные баллы за критерий
+          example: 3
+        description:
+          type: string
+          description: Описание критерия
+          example: "Студент должен объяснить основную концепцию"
+
+    QuestionPreview:
+      type: object
+      required:
+        - id
+        - type
+        - question
+        - difficulty
+        - maxPoints
+      properties:
+        id:
+          type: string
+          example: "q_123"
+        type:
+          $ref: '#/components/schemas/QuestionType'
+        question:
+          type: string
+          example: "Какие хуки используются для side effects в React?"
+        difficulty:
+          $ref: '#/components/schemas/Difficulty'
+        categoryId:
+          type: string
+          example: "cat_123"
+        categoryName:
+          type: string
+          example: "React Hooks"
+        maxPoints:
+          type: integer
+          description: Максимальные баллы за вопрос
+          example: 4
+        options:
+          type: array
+          items:
+            type: string
+          description: Только текст вариантов (БЕЗ информации о правильности)
+          example: ["useState", "useEffect", "useLayoutEffect", "useMemo"]
+        minLength:
+          type: integer
+          description: Минимальная длина ответа (для essay)
+          example: 100
+        maxLength:
+          type: integer
+          description: Максимальная длина ответа (для essay)
+          example: 1000
+
+    QuestionFull:
+      type: object
+      required:
+        - id
+        - type
+        - question
+        - difficulty
+        - maxPoints
+        - createdAt
+      properties:
+        id:
+          type: string
+          example: "q_123"
+        type:
+          $ref: '#/components/schemas/QuestionType'
+        question:
+          type: string
+          example: "Какие хуки используются для side effects в React?"
+        difficulty:
+          $ref: '#/components/schemas/Difficulty'
+        categoryId:
+          type: string
+          example: "cat_123"
+        maxPoints:
+          type: integer
+          description: Максимальные баллы (сумма всех правильных вариантов или rubric)
+          example: 4
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionOption'
+          description: Полная информация о вариантах (для multiple-select)
+        penaltyPerWrong:
+          type: integer
+          description: Штраф за каждый неправильный выбор (для multiple-select)
+          example: -1
+        minScore:
+          type: integer
+          description: Минимальный возможный балл (для multiple-select)
+          default: 0
+          example: 0
+        minLength:
+          type: integer
+          description: Минимальная длина ответа (для essay)
+          example: 100
+        maxLength:
+          type: integer
+          description: Максимальная длина ответа (для essay)
+          example: 1000
+        rubric:
+          type: array
+          items:
+            $ref: '#/components/schemas/EssayRubricItem'
+          description: Критерии оценивания (для essay)
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T11:30:00Z"
+
+    CreateQuestionRequest:
+      type: object
+      required:
+        - type
+        - question
+        - difficulty
+        - categoryId
+      properties:
+        type:
+          $ref: '#/components/schemas/QuestionType'
+        question:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        difficulty:
+          $ref: '#/components/schemas/Difficulty'
+        categoryId:
+          type: string
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionOption'
+          description: Обязательно для multiple-select
+          minItems: 2
+        penaltyPerWrong:
+          type: integer
+          description: Штраф за неправильный выбор (для multiple-select)
+          default: -1
+        minScore:
+          type: integer
+          description: Минимальный балл (для multiple-select)
+          default: 0
+        minLength:
+          type: integer
+          description: Минимальная длина (для essay)
+          minimum: 1
+        maxLength:
+          type: integer
+          description: Максимальная длина (для essay)
+          minimum: 1
+        rubric:
+          type: array
+          items:
+            $ref: '#/components/schemas/EssayRubricItem'
+          description: Критерии оценивания (для essay)
+
+    UpdateQuestionRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        difficulty:
+          $ref: '#/components/schemas/Difficulty'
+        categoryId:
+          type: string
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionOption'
+        penaltyPerWrong:
+          type: integer
+        minScore:
+          type: integer
+        minLength:
+          type: integer
+        maxLength:
+          type: integer
+        rubric:
+          type: array
+          items:
+            $ref: '#/components/schemas/EssayRubricItem'
+
+    # ============ SESSIONS ============
+    CreateSessionRequest:
+      type: object
+      properties:
+        categoryIds:
+          type: array
+          items:
+            type: string
+          description: Фильтр по категориям (только для Game Mode)
+          example: ["cat_123", "cat_456"]
+        difficulty:
+          $ref: '#/components/schemas/Difficulty'
+          description: Фильтр по сложности (только для Game Mode)
+        questionCount:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Количество вопросов (только для Game Mode)
+          example: 10
+
+    SessionResponse:
+      type: object
+      required:
+        - sessionId
+        - userId
+        - status
+        - mode
+        - questions
+        - totalQuestions
+        - answeredCount
+        - createdAt
+      properties:
+        sessionId:
+          type: string
+          example: "sess_abc123"
+        userId:
+          type: string
+          example: "usr_123"
+        status:
+          $ref: '#/components/schemas/SessionStatus'
+        mode:
+          $ref: '#/components/schemas/AppMode'
+          description: Режим, в котором создана сессия
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionPreview'
+          description: Вопросы в сессии (без правильных ответов)
+        totalQuestions:
+          type: integer
+          example: 10
+        answeredCount:
+          type: integer
+          description: Количество отвеченных вопросов
+          example: 5
+        maxScore:
+          type: integer
+          description: Максимально возможный балл
+          example: 20
+        currentScore:
+          type: integer
+          description: Текущий набранный балл (только проверенные ответы)
+          example: 8
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время истечения сессии (для Battle Mode)
+          example: "2025-01-15T12:00:00Z"
+
+    # ============ ANSWERS ============
+    SubmitAnswerRequest:
+      type: object
+      required:
+        - questionId
+      properties:
+        questionId:
+          type: string
+          example: "q_123"
+        selectedOptions:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+          description: Индексы выбранных вариантов (для multiple-select)
+          example: [0, 2]
+        text:
+          type: string
+          description: Текст ответа (для essay)
+          example: "useMemo используется для мемоизации вычисленных значений..."
+
+    AnswerResult:
+      type: object
+      required:
+        - answerId
+        - questionId
+        - status
+        - pointsEarned
+        - maxPoints
+      properties:
+        answerId:
+          type: string
+          example: "ans_123"
+        questionId:
+          type: string
+          example: "q_123"
+        status:
+          $ref: '#/components/schemas/AnswerStatus'
+        pointsEarned:
+          type: number
+          format: float
+          description: Заработанные баллы
+          example: 3.0
+        maxPoints:
+          type: integer
+          description: Максимальные баллы за вопрос
+          example: 4
+        feedback:
+          type: string
+          description: Обратная связь по ответу
+          example: "Вы выбрали 2 из 3 правильных ответов"
+        correctOptions:
+          type: array
+          items:
+            type: integer
+          description: Индексы правильных вариантов (показывается после ответа)
+          example: [0, 2, 3]
+        breakdown:
+          type: object
+          description: Детальная разбивка баллов (для multiple-select)
+          properties:
+            correctSelected:
+              type: integer
+              description: Количество правильно выбранных
+              example: 2
+            incorrectSelected:
+              type: integer
+              description: Количество неправильно выбранных
+              example: 1
+            pointsFromCorrect:
+              type: integer
+              description: Баллы за правильные
+              example: 4
+            penaltyFromIncorrect:
+              type: integer
+              description: Штраф за неправильные
+              example: -1
+            totalBeforeMin:
+              type: integer
+              description: Сумма до применения minScore
+              example: 3
+        rubricScores:
+          type: array
+          items:
+            type: object
+            properties:
+              criterion:
+                type: string
+              earnedPoints:
+                type: number
+              maxPoints:
+                type: integer
+              feedback:
+                type: string
+          description: Оценки по рубрике (для essay после проверки)
+
+    AnswerPending:
+      type: object
+      required:
+        - answerId
+        - questionId
+        - status
+        - message
+      properties:
+        answerId:
+          type: string
+          example: "ans_456"
+        questionId:
+          type: string
+          example: "q_789"
+        status:
+          type: string
+          enum: [pending]
+          example: "pending"
+        message:
+          type: string
+          example: "Ответ сохранен и ожидает проверки преподавателем"
+
+    GradeEssayRequest:
+      type: object
+      required:
+        - rubricScores
+      properties:
+        rubricScores:
+          type: array
+          items:
+            type: object
+            required:
+              - criterion
+              - earnedPoints
+            properties:
+              criterion:
+                type: string
+                description: Название критерия из rubric
+              earnedPoints:
+                type: number
+                format: float
+                minimum: 0
+                description: Набранные баллы по критерию
+              feedback:
+                type: string
+                description: Комментарий преподавателя
+        generalFeedback:
+          type: string
+          description: Общий комментарий к ответу
+
+    # ============ RESULTS ============
+    SessionResults:
+      type: object
+      required:
+        - sessionId
+        - userId
+        - status
+        - mode
+        - totalQuestions
+        - answeredQuestions
+        - score
+        - answers
+      properties:
+        sessionId:
+          type: string
+          example: "sess_abc123"
+        userId:
+          type: string
+          example: "usr_123"
+        status:
+          type: string
+          enum: [completed, partial]
+          description: |
+            completed - все вопросы проверены
+            partial - есть непроверенные essay
+        mode:
+          $ref: '#/components/schemas/AppMode'
+        totalQuestions:
+          type: integer
+          example: 10
+        answeredQuestions:
+          type: integer
+          example: 10
+        score:
+          type: object
+          required:
+            - earned
+            - max
+            - percentage
+          properties:
+            earned:
+              type: number
+              format: float
+              description: Набранные баллы
+              example: 16.5
+            max:
+              type: integer
+              description: Максимальные баллы
+              example: 20
+            percentage:
+              type: number
+              format: float
+              description: Процент правильных ответов
+              example: 82.5
+        answers:
+          type: array
+          items:
+            type: object
+            required:
+              - answerId
+              - questionId
+              - status
+            properties:
+              answerId:
+                type: string
+              questionId:
+                type: string
+              question:
+                $ref: '#/components/schemas/QuestionPreview'
+              userAnswer:
+                oneOf:
+                  - type: array
+                    items:
+                      type: integer
+                    description: Для multiple-select
+                  - type: string
+                    description: Для essay
+              status:
+                $ref: '#/components/schemas/AnswerStatus'
+              pointsEarned:
+                type: number
+                format: float
+              maxPoints:
+                type: integer
+              feedback:
+                type: string
+              correctOptions:
+                type: array
+                items:
+                  type: integer
+                description: Правильные варианты (для завершенной сессии)
+              rubricScores:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    criterion:
+                      type: string
+                    earnedPoints:
+                      type: number
+                    maxPoints:
+                      type: integer
+                    feedback:
+                      type: string
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-01-15T11:45:00Z"
+        timeSpent:
+          type: integer
+          description: Время прохождения в секундах
+          example: 3600
+
+    # ============ ADMIN USERS ============
+    UserWithStats:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            stats:
+              type: object
+              properties:
+                totalSessions:
+                  type: integer
+                  example: 5
+                completedSessions:
+                  type: integer
+                  example: 3
+                averageScore:
+                  type: number
+                  format: float
+                  example: 75.5
+                lastSessionAt:
+                  type: string
+                  format: date-time
+                  example: "2025-01-15T10:00:00Z"
+            difficultySettings:
+              $ref: '#/components/schemas/UserDifficultySettings'
+
+    UserDifficultySettings:
+      type: object
+      properties:
+        difficulty:
+          $ref: '#/components/schemas/Difficulty'
+        questionCount:
+          type: integer
+          example: 20
+        categoryIds:
+          type: array
+          items:
+            type: string
+          description: Ограничение по категориям
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T09:00:00Z"
+        updatedBy:
+          type: string
+          description: ID админа, который обновил настройки
+          example: "usr_admin"
+
+    # ============ ERRORS ============
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: "BadRequest"
+        message:
+          type: string
+          example: "Invalid question type"
+        details:
+          type: object
+          description: Дополнительная информация об ошибке
+          additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "BadRequest"
+            message: "Invalid difficulty level"
+
+    Unauthorized:
+      description: Требуется авторизация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            message: "Authentication required"
+
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Forbidden"
+            message: "Admin access required"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "NotFound"
+            message: "Resource not found"
+
+    InternalError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "InternalServerError"
+            message: "An unexpected error occurred"

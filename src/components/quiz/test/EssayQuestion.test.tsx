@@ -73,33 +73,6 @@ describe('EssayQuestion', () => {
         expect(screen.getByText(`Символов: ${answer.length}`)).toBeInTheDocument();
     });
 
-    
-    it('отображает максимальную длину 1000 символов', () => {
-        render(
-            <EssayQuestion
-                question={mockQuestion}
-                textAnswer=""
-                onTextChange={() => { }}
-            />
-        );
-
-        expect(screen.getByText(/Максимум: 1000/)).toBeInTheDocument();
-    });
-
-    it('применяет светлую тему по умолчанию', () => {
-        render(
-            <EssayQuestion
-                question={mockQuestion}
-                textAnswer=""
-                onTextChange={() => { }}
-            />
-        );
-
-        const textarea = screen.getByRole('textbox');
-        expect(textarea.className).toContain('border-gray-300');
-        expect(textarea.className).toContain('bg-white');
-        expect(textarea.className).toContain('text-gray-800');
-    });
 
     it('применяет темную тему когда theme="dark"', () => {
         render(

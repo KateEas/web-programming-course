@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LR5: React Паттерны, Оптимизация и API - Интерактивные Примеры</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 2.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .tab {
+      padding: 12px 24px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
+      backdrop-filter: blur(10px);
+    }
+    
+    .tab:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+    }
+    
+    .tab.active {
+      background: white;
+      color: #667eea;
+      font-weight: 600;
+    }
+    
+    .content {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .demo {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 2px solid #e9ecef;
+    }
+    
+    .demo h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+    
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    input {
+      padding: 10px;
+      border: 2px solid #e9ecef;
+      border-radius: 6px;
+      font-size: 14px;
+      margin: 5px;
+    }
+    
+    .card {
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+    
+    .error {
+      background: #fee;
+      border-left: 4px solid #f44;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    
+    .success {
+      background: #efe;
+      border-left: 4px solid #4f4;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    
+    .code {
+      background: #282c34;
+      color: #abb2bf;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+    
+    .render-count {
+      display: inline-block;
+      padding: 5px 10px;
+      background: #ff6b6b;
+      color: white;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 LR5: React Паттерны, Оптимизация и API</h1>
+    
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('patterns')">Паттерны</button>
+      <button class="tab" onclick="showTab('errorBoundary')">Error Boundaries</button>
+      <button class="tab" onclick="showTab('optimization')">Оптимизация</button>
+      <button class="tab" onclick="showTab('reactQuery')">React Query</button>
+    </div>
+    
+    <div class="content">
+      <!-- Tab 1: Паттерны -->
+      <div id="patterns" class="tab-content active">
+        <h2>React Паттерны (повторение из LR2)</h2>
+        
+        <div class="demo">
+          <h3>1. Custom Hook: useToggle</h3>
+          <div id="toggleDemo"></div>
+          <button onclick="demoToggle()">Toggle</button>
+          
+          <div class="code">
+function useToggle(initial = false) {
+  const [value, setValue] = useState(initial);
+  const toggle = () => setValue(v => !v);
+  return { value, toggle };
+}</div>
+        </div>
+        
+        <div class="demo">
+          <h3>2. Compound Components: Card</h3>
+          <div class="card">
+            <div style="font-weight: bold; margin-bottom: 10px;">Card Header</div>
+            <div style="margin-bottom: 10px;">Card Body Content</div>
+            <div style="border-top: 1px solid #ddd; padding-top: 10px;">
+              <button>Card Footer Action</button>
+            </div>
+          </div>
+          
+          <div class="code">
+&lt;Card&gt;
+  &lt;Card.Header&gt;Title&lt;/Card.Header&gt;
+  &lt;Card.Body&gt;Content&lt;/Card.Body&gt;
+  &lt;Card.Footer&gt;Action&lt;/Card.Footer&gt;
+&lt;/Card&gt;</div>
+        </div>
+        
+        <div class="demo">
+          <h3>3. Context API: Theme</h3>
+          <div id="themeDemo">Current theme: <span id="currentTheme">light</span></div>
+          <button onclick="toggleTheme()">Toggle Theme</button>
+          
+          <div class="code">
+const ThemeContext = createContext();
+
+function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState('light');
+  return (
+    &lt;ThemeContext.Provider value={{ theme, setTheme }}&gt;
+      {children}
+    &lt;/ThemeContext.Provider&gt;
+  );
+}</div>
+        </div>
+      </div>
+      
+      <!-- Tab 2: Error Boundaries -->
+      <div id="errorBoundary" class="tab-content">
+        <h2>Error Boundaries</h2>
+        
+        <div class="demo">
+          <h3>Демонстрация ошибки</h3>
+          <p>Error Boundary ловит ошибки в компонентах при рендере:</p>
+          
+          <div id="errorBoundaryDemo">
+            <button onclick="throwError()">Вызвать ошибку (симуляция)</button>
+          </div>
+          
+          <div class="code">
+class ErrorBoundary extends Component {
+  state = { hasError: false, error: null };
+  
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  
+  componentDidCatch(error, errorInfo) {
+    console.error('Error:', error, errorInfo);
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return &lt;div&gt;Something went wrong&lt;/div&gt;;
+    }
+    return this.props.children;
+  }
+}</div>
+          
+          <div style="margin-top: 20px;">
+            <strong>Что НЕ ловит Error Boundary:</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>❌ Ошибки в обработчиках событий (onClick)</li>
+              <li>❌ Асинхронный код (setTimeout, fetch)</li>
+              <li>✅ Ошибки при рендере компонентов</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab 3: Optimization -->
+      <div id="optimization" class="tab-content">
+        <h2>Оптимизация производительности</h2>
+        
+        <div class="demo">
+          <h3>1. React.memo - Мемоизация компонента</h3>
+          <p>Без memo: <span class="render-count" id="withoutMemo">0</span> рендеров</p>
+          <p>С memo: <span class="render-count" id="withMemo">0</span> рендеров</p>
+          <button onclick="triggerRerender()">Вызвать ре-рендер</button>
+          
+          <div class="code">
+const ExpensiveComponent = memo(({ data }) => {
+  console.log('Render');
+  return &lt;div&gt;{data.name}&lt;/div&gt;;
+});
+// Пропускает ре-рендер если props не изменились</div>
+        </div>
+        
+        <div class="demo">
+          <h3>2. useMemo - Мемоизация вычислений</h3>
+          <input id="filterInput" placeholder="Фильтр..." oninput="demoFilter()">
+          <div id="filterResult"></div>
+          <p style="margin-top: 10px;">Вычислений: <span class="render-count" id="filterCount">0</span></p>
+          
+          <div class="code">
+const filtered = useMemo(() => {
+  console.log('Filtering...');
+  return products.filter(p => p.name.includes(filter));
+}, [products, filter]);
+// Фильтрация только при изменении products или filter</div>
+        </div>
+        
+        <div class="demo">
+          <h3>3. useCallback - Мемоизация функций</h3>
+          <p>useCallback нужен когда функция передаётся в компонент с React.memo</p>
+          
+          <div class="code">
+// ❌ Без useCallback
+const handleClick = () => doSomething();
+// Новая функция каждый рендер
+
+// ✅ С useCallback
+const handleClick = useCallback(() => {
+  doSomething();
+}, []); // Та же функция</div>
+        </div>
+        
+        <div class="demo">
+          <h3>Правило оптимизации</h3>
+          <div style="background: #fff3cd; padding: 15px; border-radius: 6px; border-left: 4px solid #ffc107;">
+            <strong>⚠️ Не оптимизируйте преждевременно!</strong>
+            <ol style="margin-left: 20px; margin-top: 10px;">
+              <li>Измерить (React Profiler)</li>
+              <li>Найти узкие места</li>
+              <li>Оптимизировать</li>
+              <li>Проверить результат</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab 4: React Query -->
+      <div id="reactQuery" class="tab-content">
+        <h2>React Query - Работа с API</h2>
+        
+        <div class="demo">
+          <h3>useQuery - Получение данных</h3>
+          <button onclick="fetchUsers()">Загрузить пользователей</button>
+          <div id="usersResult"></div>
+          
+          <div class="code">
+const { data, isLoading, error } = useQuery({
+  queryKey: ['users'],
+  queryFn: fetchUsers,
+});
+
+if (isLoading) return &lt;div&gt;Loading...&lt;/div&gt;;
+if (error) return &lt;div&gt;Error: {error.message}&lt;/div&gt;;
+return &lt;div&gt;{data.map(...)}&lt;/div&gt;;</div>
+        </div>
+        
+        <div class="demo">
+          <h3>useMutation - Изменение данных</h3>
+          <input id="userName" placeholder="Имя" />
+          <button onclick="createUser()">Создать пользователя</button>
+          <div id="mutationResult"></div>
+          
+          <div class="code">
+const mutation = useMutation({
+  mutationFn: createUser,
+  onSuccess: () => {
+    // Обновить кэш
+    queryClient.invalidateQueries({ queryKey: ['users'] });
+  },
+});
+
+// Использование
+mutation.mutate({ name: 'John' });</div>
+        </div>
+        
+        <div class="demo">
+          <h3>queryKey - Ключи кэша</h3>
+          <div class="code">
+// Простой
+['users']
+
+// С параметром
+['user', userId]
+
+// С фильтрами
+['users', { role: 'admin', active: true }]
+
+// Иерархия
+['users']           // все users
+['users', 1]        // user с id=1
+['users', 1, 'posts'] // posts user'а 1</div>
+        </div>
+        
+        <div class="demo">
+          <h3>Преимущества React Query</h3>
+          <ul style="margin-left: 20px;">
+            <li>✅ Автоматическое кэширование</li>
+            <li>✅ Фоновое обновление</li>
+            <li>✅ Дедупликация запросов</li>
+            <li>✅ Optimistic updates</li>
+            <li>✅ DevTools из коробки</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Tab switching
+    function showTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show selected tab
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+    
+    // Demo: Toggle
+    let isToggled = false;
+    function demoToggle() {
+      isToggled = !isToggled;
+      document.getElementById('toggleDemo').innerHTML = 
+        `<p style="padding: 10px; background: ${isToggled ? '#d4edda' : '#f8d7da'}; border-radius: 4px;">
+          Status: ${isToggled ? 'ON' : 'OFF'}
+        </p>`;
+    }
+    demoToggle();
+    
+    // Demo: Theme
+    let currentTheme = 'light';
+    function toggleTheme() {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.getElementById('currentTheme').textContent = currentTheme;
+      document.getElementById('themeDemo').style.background = 
+        currentTheme === 'dark' ? '#333' : '#f8f9fa';
+      document.getElementById('themeDemo').style.color = 
+        currentTheme === 'dark' ? '#fff' : '#000';
+    }
+    
+    // Demo: Error Boundary
+    function throwError() {
+      document.getElementById('errorBoundaryDemo').innerHTML = `
+        <div class="error">
+          <strong>⚠️ Something went wrong</strong>
+          <p>This error was caught by ErrorBoundary</p>
+          <button onclick="location.reload()">Try again</button>
+        </div>
+      `;
+    }
+    
+    // Demo: React.memo
+    let withoutMemoCount = 0;
+    let withMemoCount = 0;
+    function triggerRerender() {
+      withoutMemoCount++;
+      // С memo - не всегда увеличивается
+      if (Math.random() > 0.5) withMemoCount++;
+      
+      document.getElementById('withoutMemo').textContent = withoutMemoCount;
+      document.getElementById('withMemo').textContent = withMemoCount;
+    }
+    
+    // Demo: useMemo filter
+    let filterCount = 0;
+    const products = [
+      { id: 1, name: 'Laptop' },
+      { id: 2, name: 'Phone' },
+      { id: 3, name: 'Tablet' },
+      { id: 4, name: 'Monitor' },
+    ];
+    
+    function demoFilter() {
+      filterCount++;
+      const filter = document.getElementById('filterInput').value.toLowerCase();
+      const filtered = products.filter(p => p.name.toLowerCase().includes(filter));
+      
+      document.getElementById('filterResult').innerHTML = 
+        filtered.map(p => `<div class="card">${p.name}</div>`).join('');
+      document.getElementById('filterCount').textContent = filterCount;
+    }
+    demoFilter();
+    
+    // Demo: React Query
+    function fetchUsers() {
+      const result = document.getElementById('usersResult');
+      result.innerHTML = '<p>⏳ Loading...</p>';
+      
+      setTimeout(() => {
+        const users = [
+          { id: 1, name: 'Alice', email: 'alice@example.com' },
+          { id: 2, name: 'Bob', email: 'bob@example.com' },
+          { id: 3, name: 'Charlie', email: 'charlie@example.com' },
+        ];
+        
+        result.innerHTML = `
+          <div class="success">✅ Данные загружены (кэшировано)</div>
+          ${users.map(u => `
+            <div class="card">
+              <strong>${u.name}</strong><br>
+              <small>${u.email}</small>
+            </div>
+          `).join('')}
+        `;
+      }, 1000);
+    }
+    
+    function createUser() {
+      const name = document.getElementById('userName').value;
+      const result = document.getElementById('mutationResult');
+      
+      if (!name) {
+        result.innerHTML = '<div class="error">Введите имя</div>';
+        return;
+      }
+      
+      result.innerHTML = '<p>⏳ Creating...</p>';
+      
+      setTimeout(() => {
+        result.innerHTML = `
+          <div class="success">
+            ✅ Пользователь "${name}" создан!<br>
+            <small>Кэш обновлён через invalidateQueries</small>
+          </div>
+        `;
+        document.getElementById('userName').value = '';
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
