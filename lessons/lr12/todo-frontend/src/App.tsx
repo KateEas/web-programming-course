@@ -218,38 +218,44 @@ export default function App() {
 
   const onToggle = useCallback(
     async (todo: ServerTodo) => {
+      const newDone = !todo.done;
+//Оптимистичная смена статуса
+      setTodos(prev => prev.map(t => t.id === todo.id ? { ...t, done: newDone } : t));
+
       try {
         await apiToggle(todo.id, !todo.done);
-        await refreshFromServer();
         setMessage('Статус обновлен.');
-      } catch {
+      } catch (error){
+        console.error('[App] Toggle failed:', error);
         // TODO(PWA-3): при ошибке сети не терять toggle-действие, а складывать в очередь.
+        // Возвращаем со старым статусом
+        setTodos(prev => prev.map(t => t.id === todo.id ? { ...t, done: todo.done } : t));
         // Сохраняем в офлайн-очередь
-        addToQueue('toggle', { id: todo.id, done: !todo.done });
-        // Оптимистичное обновление UI
-        setTodos(prev => prev.map(t => t.id === todo.id ? { ...t, done: !todo.done } : t));
-        setMessage('Статус сохранён локально. Будет синхронизирован при появлении сети.');
+        addToQueue('toggle', { id: todo.id, done: newDone });
+        setMessage('Не удалось обновить статус. Сохранено в очередь.');
       }
     },
-    [refreshFromServer, addToQueue]
+    [addToQueue]
   );
 
   const onDelete = useCallback(
     async (todo: ServerTodo) => {
+      setTodos(prev => prev.filter(t => t.id !== todo.id));
+
       try {
         await apiDelete(todo.id);
-        await refreshFromServer();
         setMessage('Задача удалена.');
-      } catch {
-        // TODO(PWA-3): при ошибке сети не терять delete-действие, а складывать в очередь.
+      } catch(error) {
+        console.error('[App] Delete failed:', error);
+        // TODO(PWA-3): при ошибке сети не терять delete-действие, а складывать в очередь. 
+        // Возвращаем задачу обратно при ошибке
+        setTodos(prev => [...prev, todo]);
         // Сохраняем в офлайн-очередь
         addToQueue('delete', { id: todo.id });
-        // Оптимистичное обновление UI
-        setTodos(prev => prev.filter(t => t.id !== todo.id));
-        setMessage('Удаление сохранено локально. Будет синхронизировано при появлении сети.');
+        setMessage('Не удалось удалить задачу. Сохранено в очередь.');
       }
     },
-    [refreshFromServer, addToQueue]
+    [addToQueue]
   );
 
   const onSubmit = useCallback(
